@@ -9,9 +9,11 @@ Installation:
   Download the .py file.
   Ensure that the .py file has its own directory(folder).
   Inside the folder the .py file is located in, you will need 3 more directories(folders):<br>
-    input,<br>
-    output,<br>
-    template,<br>
+  <br>
+    - input<br>
+    - outputbr>
+    - template<br>
+  <br>
   Ensure folder names are exactly as stated above, otherwise errors will occur.(The reason for doing this is so the file names will not matter)
   The input folder will contain the csv file from the PcWin project.
   The template folder will contain the template excel file for importing events.
