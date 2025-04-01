@@ -11,6 +11,9 @@ I am not a full-time dev. So with that being said there could be errors or bugs 
 ## Step 2:
 &nbsp;&nbsp;Go to releases
 ![image](https://github.com/user-attachments/assets/a2316742-d4bd-433b-9cd4-b249b9344e53)
+Download the latest release.
+![image](https://github.com/user-attachments/assets/e3d0b5c4-27da-4a67-af0c-abb9f693dea2)
+
 
 Ensure that the .py file has its own directory(folder).
 Inside the folder the .py file is located in, you will need 3 more directories(folders):
