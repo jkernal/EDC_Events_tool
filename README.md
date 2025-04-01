@@ -14,6 +14,7 @@ Complete the Python install.
 ![image](https://github.com/user-attachments/assets/a2316742-d4bd-433b-9cd4-b249b9344e53)
 Download the latest release.
 ![image](https://github.com/user-attachments/assets/e3d0b5c4-27da-4a67-af0c-abb9f693dea2)
+Extract and put the folder in whatever place you like.
 
 
 Ensure that the .py file has its own directory(folder).
