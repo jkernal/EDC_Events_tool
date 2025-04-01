@@ -1,4 +1,4 @@
-# EDC-Deployment
+# EDC-Events-Tool
 &nbsp;&nbsp;
 ## From the author:
 I am not a full-time dev. So with that being said there could be errors or bugs that I did not foresee. If any errors or bugs occur that you cannot resolve, please    send me a screenshot of the error or a detailed description of the bug. Thanks and good luck.
