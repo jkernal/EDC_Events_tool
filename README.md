@@ -10,6 +10,7 @@ I am not a full-time dev. So with that being said there could be errors or bugs 
 ![image](https://github.com/user-attachments/assets/13f73752-ffab-4f4d-b469-d7f6d0d274b7)
 ## Step 2:
 &nbsp;&nbsp;Go to releases
+![image](https://github.com/user-attachments/assets/a2316742-d4bd-433b-9cd4-b249b9344e53)
 
 Ensure that the .py file has its own directory(folder).
 Inside the folder the .py file is located in, you will need 3 more directories(folders):
