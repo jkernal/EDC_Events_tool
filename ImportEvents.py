@@ -1,8 +1,8 @@
 #FILENAME:ImportEvents.py
 #AUTHOR:Jonathan Shambaugh
 #PURPOSE: To extract the comments given in a Toyopuc project and write them to the corresponding address in the template for easy event importing.
-#NOTES: See the github repository for more info. https://github.com/jdsdev96/EDC-ImportEventsTool
-#VERSION: v1.2.3
+#NOTES: See the github repository for more info. https://github.com/jkernal/EDC_Events_tool
+#VERSION: v1.1.0
 #START DATE: 17 Oct 22
 
 from sys import executable, version
@@ -12,8 +12,6 @@ from csv import reader
 from shutil import copy
 from time import perf_counter
 from concurrent.futures import ThreadPoolExecutor
-from threading import Thread
-from msvcrt import getch, kbhit
 
 
 
@@ -41,7 +39,16 @@ ansi = {
 
 
 
-v = "v1.2.4"
+update_check_enabled = True
+
+
+
+debug_enabled = False
+
+
+
+v = "v1.1.0"
+
 
 
 t1 = perf_counter()
@@ -60,7 +67,7 @@ def install_lib(lib):
 
     print(installed_packages)
 
-#check if openpyxl is installed, if not, install it
+#check if libraries are installed, if not, install it
 try:
     from openpyxl import load_workbook
 except ModuleNotFoundError:
@@ -73,25 +80,12 @@ except ModuleNotFoundError:
     print(f"{ansi['Bright Red']}Requests library is not installed.")
     install_lib("requests")
     from requests import get
-
-
-#define the progress bar class
-class progressBar:
-
-    def print_progress_bar(self):
-        curs = get_current_cursor_pos()
-        while self.prog < self.total:
-            percent = round((self.prog / self.total) * 100)
-            bar = '█' * int(percent) + '-' * (100 - int(percent))#'█'
-            print(f"\033[{curs[0]};{curs[1]}f|{bar}| {percent:.0f}%", flush=True)
-            if percent == 100:
-                break
-        return None
-
-    def __init__(self, prog, total):
-        self.prog = prog
-        self.total = total
-
+try:
+    from tqdm import tqdm
+except ModuleNotFoundError:
+    print(f"{ansi['Bright Red']}tqdm library is not installed.")
+    install_lib("tqdm")
+    from tqdm import tqdm
 
 
 #print title and check python version
@@ -99,40 +93,26 @@ def preamble():
     system('color')
     print(f"{ansi['Underline']}{ansi['Bright Magenta']}Events Layout Import Tool{ansi['Reset']}")
     print(v)
-    #print("\u001b[37m\u001b[0mPython Version: " + version[:7])
-    if version[:4] != "3.10":
-        print(f"{ansi['Bright Yellow']}***Warning: The version of Python is different from what this script was written on.***{ansi['Reset']}")
-        return None
-    owner = "jdsdev96"
-    repo = "EDC-ImportEventsTool"
-    print("Checking for updates...", end="",flush=True)
-    try:
-        response = get(f"https://api.github.com/repos/{owner}/{repo}/releases/latest")
-        #print(response.json())
-        print("[DONE]")
-        if v != response.json()["tag_name"]:
-            print(f"{ansi['Bright Yellow']}***Warning: There is a new release of this tool.***")
-    except:
-        print("[FAILED]")
-        print("\u001b[33;1m***Warning: Could not connect to repository. Version check failed.***")
-    #print(environ)
-
-
-def get_current_cursor_pos():
-    print("\n")
-    print("\033[A\033[6n")
-    keep_going = True
-    buff = ""
-    while keep_going:
-        buff += getch().decode("ASCII")
-        keep_going = kbhit()
-    new_buffer =buff.replace("\x1b[", "")
-    if len(new_buffer) == 5:
-        return [new_buffer[:2], new_buffer[3]]
-    elif len(new_buffer) == 4:
-        return [new_buffer[0], new_buffer[2]]
-    else:
-        return [0,0]
+    
+    if debug_enabled:
+        if version[:4] != "3.10":
+            print(f"{ansi['Bright Yellow']}***Warning: The version of Python is different from what this script was written on.***{ansi['Reset']}")
+            print("\u001b[37m\u001b[0mPython Version: " + version[:7])
+    
+    if update_check_enabled:
+        owner = "jkernal"
+        repo = "EDC_Events_tool"
+        print("Checking for updates...", end="",flush=True)
+        try:
+            response = get(f"https://api.github.com/repos/{owner}/{repo}/releases/latest")
+            #print(response.json())
+            print("[DONE]")
+            if v != response.json()["tag_name"]:
+                print(f"{ansi['Bright Yellow']}***Warning: There is a new release of this tool.***")
+        except:
+            print("[FAILED]")
+            print("\u001b[33;1m***Warning: Could not connect to repository. Version check failed.***")
+        #print(environ)
 
 
 #Confirming, finding, and copying files.
@@ -214,7 +194,10 @@ def get_address_comment_array_from_input(location):
             -Too many fields in the file (max 131072)
             -The data is not supported under 'ISO8859' encoding
             -The file is in use""")
-    return array
+    _dict = {}
+    for row in array:
+        _dict.update({row[0]: row[1]})
+    return _dict
 
 
 #Resets the text color
@@ -247,7 +230,7 @@ def main():
         f2 = executor.submit(get_address_comment_array_from_input, file_locs[2])
     #wait for results from both threads
     address_array = f1.result()
-    address_comment_array = f2.result()
+    address_comment_dict = f2.result()
     #close executor
     executor.shutdown()
 
@@ -255,14 +238,23 @@ def main():
     
     print(f"\n{ansi['Reset']}{ansi['Green']}Working on it...",flush=True, end="")
 
-    #set the progress bar total and start the progress bar thread
-    address_prog_bar = progressBar(0, address_array_len)
-    t1 = Thread(target=address_prog_bar.print_progress_bar)
-    t1.start()
-
     #loop through the addresses and compare to the array with comments
-    for i in range(address_array_len):
-        for address in address_comment_array:
+    for i in tqdm(range(address_array_len)):
+        if address_array[i][0] == None:
+            continue
+        elif len(address_array[i][0]) == 4:
+            searched_address = "P1-" + address_array[i][0]
+        else:
+            searched_address = address_array[i][0]
+
+        if searched_address in address_comment_dict:
+            ws.cell(row=address_array[i][1], column=6).value = searched_address
+            ws.cell(row=address_array[i][1], column=7).value = address_comment_dict.get(searched_address)
+            match_count+=1
+        else:
+            pass
+            
+    """     for address in address_comment_array:
             if address_array[i][0] == address[0]:
                 ws.cell(row=address_array[i][1], column=6).value = address[0]
                 ws.cell(row=address_array[i][1], column=7).value = address[1]
@@ -282,13 +274,7 @@ def main():
                 else:
                     continue
             else:
-                address_prog_bar.prog = i
-    
-    #set progress on progress bar to 100
-    address_prog_bar.prog = address_array_len
-    
-    #wait for progress bar thread to finish
-    t1.join()
+                address_prog_bar.prog = i """
     
     #save changes to the output file
     wb.save(file_locs[1])
