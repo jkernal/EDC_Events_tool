@@ -253,28 +253,6 @@ def main():
             match_count+=1
         else:
             pass
-            
-    """     for address in address_comment_array:
-            if address_array[i][0] == address[0]:
-                ws.cell(row=address_array[i][1], column=6).value = address[0]
-                ws.cell(row=address_array[i][1], column=7).value = address[1]
-                match_count+=1
-            elif address[0][:4] == "P1-X":
-                if address_array[i][0] == address[0][3:]:
-                    ws.cell(row=address_array[i][1], column=6).value = address[0][3:]
-                    ws.cell(row=address_array[i][1], column=7).value = address[1]
-                    match_count+=1
-                else:
-                    continue
-            elif address[0][:4] == "P2-D":
-                if address_array[i][0] == address[0][3:]:
-                    ws.cell(row=address_array[i][1], column=6).value = address[0][3:]
-                    ws.cell(row=address_array[i][1], column=7).value = address[1]
-                    match_count+=1
-                else:
-                    continue
-            else:
-                address_prog_bar.prog = i """
     
     #save changes to the output file
     wb.save(file_locs[1])
@@ -282,7 +260,7 @@ def main():
     #display stats and warning if needed
     print("\nDone.", flush=True)
     print(f"\n{ansi['Bright Blue']}Number of comments found:{ansi['Yellow']}" + str(match_count))
-    if match_count == 0:
+    if match_count < 10:
         print(f"{ansi['Bright Yellow']}***No matches were found. Make sure your input and template files are correct***")
 
     #reset and exit()
