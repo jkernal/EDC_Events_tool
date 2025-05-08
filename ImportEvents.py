@@ -236,7 +236,7 @@ def main():
 
     match_count, address_array_len = 0, len(address_array)
     
-    print(f"\n{ansi['Reset']}{ansi['Green']}Working on it...",flush=True, end="")
+    print(f"\n{ansi['Reset']}{ansi['Green']}Working on it...\n")
 
     #loop through the addresses and compare to the array with comments
     for i in tqdm(range(address_array_len)):
@@ -248,7 +248,7 @@ def main():
             searched_address = address_array[i][0]
 
         if searched_address in address_comment_dict:
-            ws.cell(row=address_array[i][1], column=6).value = searched_address
+            ws.cell(row=address_array[i][1], column=6).value = address_array[i][0]
             ws.cell(row=address_array[i][1], column=7).value = address_comment_dict.get(searched_address)
             match_count+=1
         else:
