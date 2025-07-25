@@ -121,7 +121,7 @@ def preamble():
             #print(response.json())
             print("[DONE]")
             if v != response.json()["tag_name"]:
-                print(f"{ansi['Bright Yellow']}***Warning: There is a new release of this tool.***")
+                print(f"{ansi['Bright Yellow']}***Warning: There is a new release of this tool.***\nGo to: https://github.com/jkernal/EDC_Events_tool")
         except:
             print("[FAILED]")
             print("\u001b[33;1m***Warning: Could not connect to repository. Version check failed.***")
