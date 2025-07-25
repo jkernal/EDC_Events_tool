@@ -55,8 +55,15 @@ t1 = perf_counter()
 
 
 
-#installs openpyxl using the command line
 def install_lib(lib):
+    
+    """
+    Installs the specified Python library using pip.
+    
+    Parameters:
+        lib (str): The name of the library to install.
+    """
+    
     print(f"{ansi['Yellow']}\nInstalling {lib}...")
     # implement pip as a subprocess:
     check_call([executable, '-m', 'pip', 'install', lib])
@@ -88,8 +95,14 @@ except ModuleNotFoundError:
     from tqdm import tqdm
 
 
-#print title and check python version
+
 def preamble():
+    
+    """
+    Displays the script title, version, and optionally checks Python version and 
+    whether a newer version of the script is available on GitHub.
+    """
+    
     system('color')
     print(f"{ansi['Underline']}{ansi['Bright Magenta']}Events Layout Import Tool{ansi['Reset']}")
     print(v)
@@ -115,8 +128,17 @@ def preamble():
         #print(environ)
 
 
-#Confirming, finding, and copying files.
+
 def manages_files():
+    
+    """
+    Confirms the presence of template, input, and output directories and files.
+    Copies the template file into the output directory for modification.
+
+    Returns:
+        list: File paths for the template, output copy, and input file.
+    """
+    
     wrk_dir = getcwd()
     temp_dir, out_dir, in_dir = wrk_dir + '//template', wrk_dir + '//output', wrk_dir + '//input'
     #confirming files
@@ -158,7 +180,16 @@ def manages_files():
     return locations
 
 
+
 def perm_check(locs):
+    
+    """
+    Checks read, write, and execute permissions for a list of files.
+    
+    Parameters:
+        locs (list): List of file paths to check.
+    """
+    
     file_names = ["template", "output", "input"]
     access_type = ["read", "write", "execute"]
     for i in range(len(locs)):
@@ -173,16 +204,38 @@ def perm_check(locs):
     return None
 
 
-#gets address that need comments
+
 def get_address_array_from_temp(sheet):
+    
+    """
+    Extracts address values from column B of the Excel worksheet starting from row 3.
+    
+    Parameters:
+        sheet (Worksheet): An openpyxl worksheet object.
+
+    Returns:
+        list: A list of [address, row number] pairs.
+    """
+    
     array = []
     for i in range(sheet.max_row):
         array.append([sheet.cell(i+3,2).value, i + 3])
     return array
 
 
-#gets all address that have comments
+
 def get_address_comment_array_from_input(location):
+    
+    """
+    Parses the input CSV file and creates a dictionary of address-comment pairs.
+
+    Parameters:
+        location (str): File path of the input CSV.
+
+    Returns:
+        dict: Dictionary of address (key) to comment (value).
+    """
+    
     try:
         array = list(reader(open(location, encoding= "ISO8859")))
     except PermissionError:
@@ -200,17 +253,32 @@ def get_address_comment_array_from_input(location):
     return _dict
 
 
-#Resets the text color
+
 def done():
+    
+    """
+    Resets terminal text formatting and exits the program after printing execution time.
+    """
+    
     print("\u001b[37m\u001b[0m")
     time_elapsed = round((perf_counter() - t1), 3)
     print(" ".join([f"{ansi['Reset']}Execution time: ", f"{time_elapsed}", "sec(s)"]))
-    #input("throwaway")
     exit()
 
 
-#main code
+
 def main():
+    
+    """
+    Main execution flow:
+    - Initializes script
+    - Confirms and copies files
+    - Checks file permissions
+    - Extracts addresses from Excel and comments from CSV
+    - Matches and writes comments to the Excel output
+    - Saves file and reports results
+    """
+    
     #run preamble
     preamble()
 
@@ -236,7 +304,7 @@ def main():
 
     match_count, address_array_len = 0, len(address_array)
     
-    print(f"\n{ansi['Reset']}{ansi['Green']}Working on it...\n")
+    print(f"\n{ansi['Reset']}{ansi['Green']}Working on it...",flush=True, end="")
 
     #loop through the addresses and compare to the array with comments
     for i in tqdm(range(address_array_len)):
@@ -248,11 +316,33 @@ def main():
             searched_address = address_array[i][0]
 
         if searched_address in address_comment_dict:
-            ws.cell(row=address_array[i][1], column=6).value = address_array[i][0]
+            ws.cell(row=address_array[i][1], column=6).value = searched_address
             ws.cell(row=address_array[i][1], column=7).value = address_comment_dict.get(searched_address)
             match_count+=1
         else:
             pass
+            
+    """     for address in address_comment_array:
+            if address_array[i][0] == address[0]:
+                ws.cell(row=address_array[i][1], column=6).value = address[0]
+                ws.cell(row=address_array[i][1], column=7).value = address[1]
+                match_count+=1
+            elif address[0][:4] == "P1-X":
+                if address_array[i][0] == address[0][3:]:
+                    ws.cell(row=address_array[i][1], column=6).value = address[0][3:]
+                    ws.cell(row=address_array[i][1], column=7).value = address[1]
+                    match_count+=1
+                else:
+                    continue
+            elif address[0][:4] == "P2-D":
+                if address_array[i][0] == address[0][3:]:
+                    ws.cell(row=address_array[i][1], column=6).value = address[0][3:]
+                    ws.cell(row=address_array[i][1], column=7).value = address[1]
+                    match_count+=1
+                else:
+                    continue
+            else:
+                address_prog_bar.prog = i """
     
     #save changes to the output file
     wb.save(file_locs[1])
@@ -260,7 +350,7 @@ def main():
     #display stats and warning if needed
     print("\nDone.", flush=True)
     print(f"\n{ansi['Bright Blue']}Number of comments found:{ansi['Yellow']}" + str(match_count))
-    if match_count < 10:
+    if match_count == 0:
         print(f"{ansi['Bright Yellow']}***No matches were found. Make sure your input and template files are correct***")
 
     #reset and exit()
@@ -268,5 +358,6 @@ def main():
     #end of main
 
 
+#entry point
 if __name__ == "__main__":
     main()
