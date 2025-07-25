@@ -21,7 +21,8 @@ Ensure that the .py file has its own directory(folder).
 ##### Inside the folder the .py file is located in, you will need 3 more directories(folders):
 - Input
 - Output
-- Template\n
+- Template
+  
 Ensure folder names are exactly as stated above, otherwise errors will occur.(The reason for doing this is so the file names will not matter)
 The input folder will contain your comment file from the PcWin project, this should be a csv.
 The template folder will contain the template excel file for importing events. **YOU CAN CHANGE THE ADDRESSES IN THIS FILE IF NEEDED.**
