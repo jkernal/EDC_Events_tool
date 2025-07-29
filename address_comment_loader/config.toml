@@ -1,0 +1,14 @@
+#log_level options:
+# "error", "warn", "info", "debug", "trace"
+log_level = "info"
+# Paths to CSV directories and output files
+screenworks_csv_dir = "ScreenWorks"
+toyopuc_csv_dir = "Toyopuc"
+sw_output_path = "sw_comments.bin"
+toyo_output_path = "toyo_comments.bin"
+# Column numbers for CSV files
+# Note: sw = screenworks, toyo = Toyopuc
+sw_addr_col = 11
+sw_comment_col = 7 
+toyo_addr_col = 1
+toyo_comment_col = 2 
