@@ -1,6 +1,6 @@
 #log_level options:
 # "error", "warn", "info", "debug", "trace"
-log_level = "info"
+log_level = "debug"
 # Paths to CSV directories and output files
 screenworks_csv_dir = "ScreenWorks"
 toyopuc_csv_dir = "Toyopuc"

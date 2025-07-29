@@ -402,6 +402,14 @@ fn main() {
         }
     };
 
+    let parent_dir = match exe_path.parent() {
+        Some(path) => path,
+        None => {
+            println!("Failed to get the grand parent directory of the executable path.");
+            return;
+        }
+    };
+
     //create the path to the config file
     let config_path = exe_dir.join("config.toml");
 
@@ -424,37 +432,45 @@ fn main() {
     debug!("User config: {user_config:?}");
 
     //convert the user_config sw_output_path to a PathBuf type
-    let sw_out_path = PathBuf::from(&user_config.sw_output_path);
+    let sw_out_path = exe_dir.join(&user_config.sw_output_path);
+
+    let sw_path_str = sw_out_path.to_string_lossy();
+    debug!("Screenworks output path: {sw_path_str}");
 
     //check to see of the screenworks output file exists
     if sw_out_path.is_file() {
         match fs::remove_file(&sw_out_path) {
             Ok(_) => {},
             Err(error) => {
-                let path_str = sw_out_path.to_string_lossy();
-                info!("Failed to delete {path_str} | {error}");
+                info!("Failed to delete {sw_path_str} | {error}");
             }
         }
     }
 
     //convert the user_config toyo_output_path to a PathBuf type
-    let toyo_out_path = PathBuf::from(&user_config.toyo_output_path);
+    let toyo_out_path = exe_dir.join(&user_config.toyo_output_path);
+
+    let toyo_path_str = toyo_out_path.to_string_lossy();
+    debug!("Toyopuc output path: {toyo_path_str}");
 
     //check to see of the toyopuc output file exists
     if toyo_out_path.is_file() {
         match fs::remove_file(&toyo_out_path) {
             Ok(_) => {},
             Err(error) => {
-                let path_str = toyo_out_path.to_string_lossy();
-                info!("Failed to delete {path_str} | {error}");
+                info!("Failed to delete {toyo_path_str} | {error}");
             }
         }
     }
 
     let screenworks_csv_exists: bool;
 
+    let sw_csv_dir = parent_dir.join(&user_config.screenworks_csv_dir);
+    let sw_csv_str = sw_csv_dir.to_string_lossy();
+    debug!("ScreenWorks directory: {sw_csv_str}");
+
     //get the pathbuf of the screenworks csv file
-    let screenworks_csv_pathbuf = match get_first_file(&user_config.screenworks_csv_dir) {
+    let screenworks_csv_pathbuf = match get_first_file(&sw_csv_str) {
         Some(path) => {
             screenworks_csv_exists = true;
             path
@@ -471,8 +487,12 @@ fn main() {
 
     let toyopuc_csv_exists: bool;
 
+    let toyo_csv_dir = parent_dir.join(&user_config.toyopuc_csv_dir);
+    let toyo_csv_str = toyo_csv_dir.to_string_lossy();
+    debug!("Toyopuc directory: {toyo_csv_str}");
+
     //get the pathbuf to the toyopuc csv
-    let toyopuc_csv_pathbuf = match get_first_file(&user_config.toyopuc_csv_dir) {
+    let toyopuc_csv_pathbuf = match get_first_file(&toyo_csv_str) {
         Some(path) => {
             toyopuc_csv_exists = true;
             path
@@ -497,7 +517,7 @@ fn main() {
         user_config.sw_comment_col - 1);
 
         sw_file_write_complete = write_comments_table_file(sw_comments_table,
-            &user_config.sw_output_path);
+            &sw_out_path.to_string_lossy());
     }
 
     let mut toyo_file_write_complete = false;
@@ -510,7 +530,7 @@ fn main() {
         user_config.toyo_comment_col - 1);
         
         toyo_file_write_complete = write_comments_table_file(toyo_comments_table,
-            &user_config.toyo_output_path)
+            &toyo_out_path.to_string_lossy())
     }
 
     //log what was completed
