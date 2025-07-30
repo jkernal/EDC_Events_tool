@@ -51,7 +51,7 @@ fn get_first_file(dir_path: &str) -> Option<PathBuf> {
     //loop through the array of entries and return the first file. (there could be directories in the entries array)
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_file() {
+        if path.is_file() && is_csv_file(&path){
             return Some(path);
         }
         
@@ -466,11 +466,7 @@ fn main() {
     //get the pathbuf of the screenworks csv file
     let screenworks_csv_pathbuf = match get_first_file(&sw_csv_str) {
         Some(path) => {
-            screenworks_csv_exists = is_csv_file(&path);
-            if !screenworks_csv_exists {
-                let sw_csv_dir_str = sw_csv_dir.to_string_lossy();
-                info!("The file in the {sw_csv_dir_str} directory is not a csv.")
-            }
+            screenworks_csv_exists = true;
             path
         }
         None => {
@@ -482,6 +478,7 @@ fn main() {
 
     //convert the pathbuf to a string
     let screenworks_csv_path = screenworks_csv_pathbuf.to_str().unwrap_or("Not found");
+    debug!("Path to ScreenWorks csv: {screenworks_csv_path}");
 
     let toyopuc_csv_exists: bool;
 
@@ -492,11 +489,7 @@ fn main() {
     //get the pathbuf to the toyopuc csv
     let toyopuc_csv_pathbuf = match get_first_file(&toyo_csv_str) {
         Some(path) => {
-            toyopuc_csv_exists = is_csv_file(&path);
-            if !screenworks_csv_exists {
-                let toyo_csv_dir_str = toyo_csv_dir.to_string_lossy();
-                info!("The file in the {toyo_csv_dir_str} directory is not a csv.")
-            }
+            toyopuc_csv_exists = true;
             path
         }
         None => {
@@ -508,6 +501,7 @@ fn main() {
 
     //convert the pathbuf to a string
     let toyopuc_csv_path = toyopuc_csv_pathbuf.to_str().unwrap_or("Not found");
+    debug!("Path to Toyopuc csv: {toyopuc_csv_path}");
 
     let mut sw_file_write_complete = false;
 
