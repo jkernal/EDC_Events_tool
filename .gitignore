@@ -7,3 +7,5 @@ ScreenWorks/*
 !ScreenWorks/.gitkeep
 Toyopuc/*
 !Toyopuc/.gitkeep
+loader/bin/*
+!loader/bin/.gitkeep

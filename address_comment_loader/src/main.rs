@@ -396,7 +396,7 @@ fn main() {
         }
     };
 
-    let parent_dir = match exe_path.parent() {
+    let parent_dir = match exe_dir.parent() {
         Some(path) => path,
         None => {
             println!("Failed to get the grand parent directory of the executable path.");
