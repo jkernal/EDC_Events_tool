@@ -1,6 +1,4 @@
 address_comment_loader/target/*
-log_files/*
-!log_files/.gitkeep
 output/*
 !output/.gitkeep
 ScreenWorks/*
@@ -9,3 +7,4 @@ Toyopuc/*
 !Toyopuc/.gitkeep
 loader/bin/*
 !loader/bin/.gitkeep
+loader/log_files/*

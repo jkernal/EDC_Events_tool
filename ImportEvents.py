@@ -155,7 +155,8 @@ def manages_files():
         done()
     # Copying template file to output directory
     try:
-        copy(temp_loc, out_dir + "\\out1_" + listdir(temp_dir)[0])
+        output_path = out_dir + "\\out1_" + listdir(temp_dir)[0]
+        copy(temp_loc, output_path)
     except FileNotFoundError:
         print("\n")
         print(
@@ -169,22 +170,21 @@ def manages_files():
         print(e)
         done()
 
-    toyo_loc = f"{wrk_dir}\\temp\\toyo_comments.bin"
+    toyo_loc = f"{wrk_dir}\\loader\\bins\\toyo_comments.bin"
 
     toyo_path = Path(toyo_loc)
 
     if not toyo_path.exists():
         toyo_loc = None
 
-    sw_loc = f"{wrk_dir}\\temp\\sw_comments.bin"
+    sw_loc = f"{wrk_dir}\\loader\\bins\\sw_comments.bin"
 
     sw_path = Path(sw_loc)
 
     if not sw_path.exists():
         sw_loc = None
 
-    out_loc = out_dir + "\\" + listdir(out_dir)[0]
-    locations = [temp_loc, out_loc, toyo_loc, sw_loc]
+    locations = [temp_loc, output_path, toyo_loc, sw_loc]
     return locations
 
 
@@ -300,7 +300,8 @@ def main():
     preamble()
 
     # run the address comment loader program
-    exe_path = Path(__file__).parent / "address_comment_loader.exe"
+    exe_path = Path(__file__).parent / "loader\\address_comment_loader.exe"
+    print(exe_path)
     run(str(exe_path))
 
     # find file locations
