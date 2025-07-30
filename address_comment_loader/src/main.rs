@@ -13,7 +13,7 @@
 //imports
 use std::env;
 use std::time::Instant;
-use std::{fs::{self, File}, io::{BufReader, Write}, path::{PathBuf}};
+use std::{fs::{self, File}, io::{BufReader, Write}, path::{Path, PathBuf}};
 use csv::{ReaderBuilder};
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
@@ -87,7 +87,6 @@ fn pad_or_truncate(input: &str, size: usize) -> Vec<u8> {
     }
     
     bytes
-
 }
 
 
@@ -111,9 +110,9 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
     let file_result = File::open(csv_path);
 
     //Handle opening errors
-    let csv_file = match file_result  {
+    let csv_file = match file_result {
         Ok(file) => file,
-        Err(error) => panic!("There was a problem opening the csv file.\n{error}")
+        Err(error) => panic!("There was a problem opening the csv file.\n{error}"),
     };
 
     //The ScreenWorks software exports csv in UTF-16 LE so a conversion is needed:
@@ -126,9 +125,7 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
     let reader = BufReader::new(converted_csv);
 
     //Construct the CSV reader object
-    let mut csv_reader = ReaderBuilder::new()
-        .flexible(true)
-        .from_reader(reader);
+    let mut csv_reader = ReaderBuilder::new().flexible(true).from_reader(reader);
 
     //Create iterator for csv file
     let iter = csv_reader.records();
@@ -166,7 +163,7 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
         }
 
         //splits the string by \
-        address = address.split("\\").next().unwrap_or("XXXXX");// the split method returns an iterator so the next() method selects the first element
+        address = address.split("\\").next().unwrap_or("XXXXX"); // the split method returns an iterator so the next() method selects the first element
 
         //fallback upon error to empty string
         let raw_comment = record.get(comment_index).unwrap_or("Not found");
@@ -191,7 +188,6 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
         //add the complete record to the records array
         records.push(record_bytes);
         record_count += 1;
-
     }
 
     //log how many records were found
@@ -204,10 +200,7 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
     }
 
     records
-
 }
-
-
 
 fn get_toyopuc_comments(csv_path: &str, addr_index: usize, comment_index: usize) -> Vec<Vec<u8>> {
     /*
@@ -228,18 +221,16 @@ fn get_toyopuc_comments(csv_path: &str, addr_index: usize, comment_index: usize)
     let file_result = File::open(csv_path);
 
     //Handle opening errors
-    let csv_file = match file_result  {
+    let csv_file = match file_result {
         Ok(file) => file,
-        Err(error) => panic!("There was a problem opening the csv file.\n{error}")
+        Err(error) => panic!("There was a problem opening the csv file.\n{error}"),
     };
 
     //Construct a reader object
     let reader = BufReader::new(csv_file);
 
     //Construct the CSV reader object
-    let mut csv_reader = ReaderBuilder::new()
-        .flexible(true)
-        .from_reader(reader);
+    let mut csv_reader = ReaderBuilder::new().flexible(true).from_reader(reader);
 
     //Create iterator for csv file
     let iter = csv_reader.records();
@@ -277,7 +268,7 @@ fn get_toyopuc_comments(csv_path: &str, addr_index: usize, comment_index: usize)
         }
 
         //splits the string by \
-        address = address.split("\\").next().unwrap_or("XXXXX");// the split method returns an iterator so the next() method selects the first element
+        address = address.split("\\").next().unwrap_or("XXXXX"); // the split method returns an iterator so the next() method selects the first element
 
         //fallback upon error to empty string
         let raw_comment = record.get(comment_index).unwrap_or("Not found");
@@ -302,7 +293,6 @@ fn get_toyopuc_comments(csv_path: &str, addr_index: usize, comment_index: usize)
         //add the complete record to the records array
         records.push(record_bytes);
         record_count += 1;
-
     }
 
     //log how many records were found
@@ -348,7 +338,7 @@ fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
     for chunk in contents {
 
         match output_file.write_all(&chunk) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(error) => {
                 error!("Failed to write data: {error}");
                 continue;
@@ -357,10 +347,14 @@ fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
     }
 
     true //indicate that the write was successful
-
 }
 
-
+fn is_csv_file(path: &Path) -> bool {
+    match path.extension() {
+        Some(ext) => ext.eq_ignore_ascii_case("csv"),
+        None => false,
+    }
+}
 
 fn main() {
     /*
@@ -386,7 +380,7 @@ fn main() {
     let start = Instant::now();
 
     //get the current exe directory
-    let exe_path = match env::current_exe(){
+    let exe_path = match env::current_exe() {
         Ok(path) => path,
         Err(error) => {
             println!("Failed to get current executable path: {error}");
@@ -440,7 +434,7 @@ fn main() {
     //check to see of the screenworks output file exists
     if sw_out_path.is_file() {
         match fs::remove_file(&sw_out_path) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(error) => {
                 info!("Failed to delete {sw_path_str} | {error}");
             }
@@ -456,7 +450,7 @@ fn main() {
     //check to see of the toyopuc output file exists
     if toyo_out_path.is_file() {
         match fs::remove_file(&toyo_out_path) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(error) => {
                 info!("Failed to delete {toyo_path_str} | {error}");
             }
@@ -472,7 +466,11 @@ fn main() {
     //get the pathbuf of the screenworks csv file
     let screenworks_csv_pathbuf = match get_first_file(&sw_csv_str) {
         Some(path) => {
-            screenworks_csv_exists = true;
+            screenworks_csv_exists = is_csv_file(&path);
+            if !screenworks_csv_exists {
+                let sw_csv_dir_str = sw_csv_dir.to_string_lossy();
+                info!("The file in the {sw_csv_dir_str} directory is not a csv.")
+            }
             path
         }
         None => {
@@ -494,9 +492,13 @@ fn main() {
     //get the pathbuf to the toyopuc csv
     let toyopuc_csv_pathbuf = match get_first_file(&toyo_csv_str) {
         Some(path) => {
-            toyopuc_csv_exists = true;
+            toyopuc_csv_exists = is_csv_file(&path);
+            if !screenworks_csv_exists {
+                let toyo_csv_dir_str = toyo_csv_dir.to_string_lossy();
+                info!("The file in the {toyo_csv_dir_str} directory is not a csv.")
+            }
             path
-        },
+        }
         None => {
             info!("Toyopuc csv doesn't exist.");
             toyopuc_csv_exists = false;
@@ -512,12 +514,13 @@ fn main() {
     //if screenworks csv does exists, get the comments and write them to the screenworks output file
     if screenworks_csv_exists {
         let sw_comments_table = get_screenwroks_comments(
-        screenworks_csv_path,
-        user_config.sw_addr_col - 1,
-        user_config.sw_comment_col - 1);
+            screenworks_csv_path,
+            user_config.sw_addr_col - 1,
+            user_config.sw_comment_col - 1,
+        );
 
-        sw_file_write_complete = write_comments_table_file(sw_comments_table,
-            &sw_out_path.to_string_lossy());
+        sw_file_write_complete =
+            write_comments_table_file(sw_comments_table, &sw_out_path.to_string_lossy());
     }
 
     let mut toyo_file_write_complete = false;
@@ -525,17 +528,21 @@ fn main() {
     //if toyopuc csv exists, get the comments and write them to the toyopuc output file
     if toyopuc_csv_exists {
         let toyo_comments_table = get_toyopuc_comments(
-        toyopuc_csv_path,
-        user_config.toyo_addr_col - 1,
-        user_config.toyo_comment_col - 1);
+            toyopuc_csv_path,
+            user_config.toyo_addr_col - 1,
+            user_config.toyo_comment_col - 1,
+        );
         
-        toyo_file_write_complete = write_comments_table_file(toyo_comments_table,
-            &toyo_out_path.to_string_lossy())
+        toyo_file_write_complete =
+            write_comments_table_file(toyo_comments_table, &toyo_out_path.to_string_lossy())
     }
 
     //log what was completed
     if sw_file_write_complete && toyo_file_write_complete {
-        info!("Wrote {} file and {} file.", &user_config.sw_output_path, &user_config.toyo_output_path);
+        info!(
+            "Wrote {} file and {} file.",
+            &user_config.sw_output_path, &user_config.toyo_output_path
+        );
     } else if sw_file_write_complete {
         info!("Wrote {} file.", &user_config.sw_output_path);
     } else if toyo_file_write_complete {

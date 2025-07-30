@@ -23,7 +23,7 @@ pub struct Settings {
     pub sw_comment_col: usize,
     pub toyo_output_path: String,
     pub toyo_addr_col: usize,
-    pub toyo_comment_col: usize
+    pub toyo_comment_col: usize,
 }
 
 //opens file and reads variables into a config object
@@ -33,5 +33,7 @@ pub fn load_config(path: &str) -> Settings {
         .build()
         .expect("Failed to build config");
 
-    builder.try_deserialize::<Settings>().expect("Failed to deserialize config")
+    builder
+        .try_deserialize::<Settings>()
+        .expect("Failed to deserialize config")
 }

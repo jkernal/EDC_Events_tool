@@ -1,1 +1,9 @@
-address_comment_loader/target/
+address_comment_loader/target/*
+log_files/*
+!log_files/.gitkeep
+output/*
+!output/.gitkeep
+ScreenWorks/*
+!ScreenWorks/.gitkeep
+Toyopuc/*
+!Toyopuc/.gitkeep

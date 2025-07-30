@@ -7,7 +7,7 @@
 //flexi_logger = "0.27"
 
 
-use flexi_logger::{Logger, FileSpec, Criterion, Naming, Cleanup};
+use flexi_logger::{Cleanup, Criterion, FileSpec, Logger, Naming};
 use std::sync::Once;
 
 
@@ -33,16 +33,17 @@ pub fn init_logger(level: &str, basename: &str) {
                 )
             })
             //settings for file
-            .log_to_file(FileSpec::default()
-                .basename(basename)
-                .suffix("log")
-                .directory("log_files")
+            .log_to_file(
+                FileSpec::default()
+                    .basename(basename)
+                    .suffix("log")
+                    .directory("log_files"),
             )
             //settings for max file size and rotating between log files
             .rotate(
                 Criterion::Size(26_214_400), // 25 MB max file size
                 Naming::Timestamps,         // Use timestamped rotated files
-                Cleanup::KeepLogFiles(20)    // Keep last 20 logs
+                Cleanup::KeepLogFiles(20),    // Keep last 20 logs
             )
             .start()
             .unwrap();
