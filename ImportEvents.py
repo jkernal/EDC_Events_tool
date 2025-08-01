@@ -118,7 +118,7 @@ def preamble():
             print("[DONE]")
             if v != response.json()["tag_name"]:
                 print(
-                    f"{ansi['Bright Yellow']}***Warning: There is a new release of this tool.***\nGo to: https:\\github.com/jkernal/EDC_Events_tool"
+                    f"{ansi['Bright Yellow']}***There is a new release of this tool.***\nGo to: https:\\github.com/jkernal/EDC_Events_tool"
                 )
         except Exception as e:
             print("[FAILED]")
