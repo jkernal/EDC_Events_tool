@@ -4,7 +4,7 @@
 #   and write them to the corresponding address in the template for easy event importing.
 # NOTES: See the github repository for more info.
 #   https:\\github.com/jkernal/EDC_Events_tool
-# VERSION: v1.1.0
+# VERSION: v2.0.0
 # START DATE: 17 Oct 22
 
 from mmap import ACCESS_READ, mmap
@@ -42,7 +42,7 @@ update_check_enabled = True
 
 debug_enabled = False
 
-v = "v1.1.0"
+v = "v2.0.0"
 
 t1 = perf_counter()
 
