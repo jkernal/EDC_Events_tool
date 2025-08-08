@@ -42,7 +42,7 @@ update_check_enabled = True
 
 debug_enabled = False
 
-v = "v2.0.0"
+v = "v2.0.1"
 
 t1 = perf_counter()
 
