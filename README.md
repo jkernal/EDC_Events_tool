@@ -5,7 +5,7 @@ I am not a full-time dev. So with that being said there could be errors or bugs 
 
 
 ## Installation
-### Step 1
+### Step 1:
 &nbsp;&nbsp;Make sure you have Python installed AND added to PATH!
 ![image](https://github.com/user-attachments/assets/13f73752-ffab-4f4d-b469-d7f6d0d274b7)
 Complete the Python install.
@@ -31,6 +31,17 @@ The template folder will contain the template excel file for importing events. *
 ##### Running the tool:
 You can either run the 'ImportEvents.bat' or the 'ImportEvents.py'. The only difference between the two is the .bat file maintains a terminal after the script completes so if errors do occur you can read them, the .py file will close the terminal when it encounters an error.
 The output folder will contain a copy of the template file with all the comments that it could find. You will most likely need to edit some comments to get them to less than 40 characters per EDC requirements.
+
+## Exporting ScreenWorks projects
+### Step 1:
+Go to File>Export CSV File  
+<img width="356" height="589" alt="Screenshot 2025-08-08 121013" src="https://github.com/user-attachments/assets/381c1304-55c6-40c9-8c7f-c4c956c5f707" />
+### Step 2:
+Make sure Unicode is selected. Then click Ok.  
+<img width="227" height="335" alt="Screenshot 2025-08-08 121025" src="https://github.com/user-attachments/assets/681dd78a-5520-4296-9212-f113320de915" />
+
+
+
 ## Tips and Notes
 - Confirm that the comment file you choose out of the Toyopuc project is the english one.
 - Sometimes you can receive an error if the comment file is too large, this is an encoding limitation, so a workaround is to open the comment file and delete some rows that you know are not needed.
