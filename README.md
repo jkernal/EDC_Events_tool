@@ -18,13 +18,15 @@ Extract and put the folder in whatever place you like.
 
 ## Using the Tool
 Ensure that the .py file has its own directory(folder).
-##### Inside the folder the .py file is located in, you will need 3 more directories(folders):
-- Input
+##### Inside the folder the .py file is located in, you will need 4 more directories(folders):
+- Toyopuc
+- Screenworks
 - Output
 - Template
   
 Ensure folder names are exactly as stated above, otherwise errors will occur.(The reason for doing this is so the file names will not matter)
-The input folder will contain your comment file from the PcWin project, this should be a csv.
+The Toyopuc folder will contain your comment file from the PcWin project, this should be a csv.
+The Screenworks folder will contain you exported Screenworks project ***Make sure to export as Unicode!***
 The template folder will contain the template excel file for importing events. **YOU CAN CHANGE THE ADDRESSES IN THIS FILE IF NEEDED.**
 ##### Running the tool:
 You can either run the 'ImportEvents.bat' or the 'ImportEvents.py'. The only difference between the two is the .bat file maintains a terminal after the script completes so if errors do occur you can read them, the .py file will close the terminal when it encounters an error.
