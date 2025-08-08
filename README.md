@@ -37,7 +37,7 @@ The output folder will contain a copy of the template file with all the comments
 - If you have any issues with dependencies or library imports let me know.
 - When running for the first time it will need to install libraries so don't panic.
 ## To-Do
-- Adding support for exported ScreenWorks csv's
+- Sit back and relax
 
   
  
