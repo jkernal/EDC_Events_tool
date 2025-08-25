@@ -42,7 +42,7 @@ update_check_enabled = True
 
 debug_enabled = False
 
-v = "v2.0.1"
+v = "v2.0.2"
 
 t1 = perf_counter()
 
@@ -343,8 +343,6 @@ def main():
     # loop through the addresses and compare to the array with comments
     for i in tqdm(range(address_array_len)):
         
-        picked = None
-        
         if lookup_addresses[i][0] is None:
             continue
         elif len(lookup_addresses[i][0]) == 4:
@@ -376,6 +374,7 @@ def main():
                     toyo_addr_comment_map.get(searched_address)
                 )
                 toyo_match_count += 1
+                #print(f"{searched_address} came from Toyopuc")
                 continue
         
         elif isinstance(sw_result, str) and is_valid_by_regex(sw_result):
@@ -387,6 +386,7 @@ def main():
                     sw_addr_comment_map.get(searched_address)
                 )
                 sw_match_count += 1
+                #print(f"{searched_address} came from ScreenWorks")
                 continue
         
         #print(f"Toyopuc result = {toyo_result}")
@@ -398,14 +398,14 @@ def main():
                 toyo_addr_comment_map.get(searched_address)
             )
             toyo_match_count += 1
-            print(f"{searched_address} came from Toyopuc")
+            #print(f"{searched_address} came from Toyopuc")
         elif sw_result is not None:
             ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
             ws.cell(row=lookup_addresses[i][1], column=7).value = (
                 sw_addr_comment_map.get(searched_address)
             )
             sw_match_count += 1
-            print(f"{searched_address} came from ScreenWorks")
+            #print(f"{searched_address} came from ScreenWorks")
 
     # save changes to the output file
     wb.save(file_locs[1])
