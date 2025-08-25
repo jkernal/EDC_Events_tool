@@ -142,6 +142,7 @@ def manages_files():
     try:
         temp_loc = temp_dir + "\\" + listdir(temp_dir)[0]
     except FileNotFoundError:
+        print(temp_dir)
         print("\n")
         print(
             f"{ansi['Bold']}{ansi['Bright Red']}The template directory was not found.\n\nPlease add the template directory and restart."
@@ -244,6 +245,7 @@ def load_shm_as_dict(path, record_size=160):
             record = mm[i : i + record_size]
             addr = record[:64].decode("utf-8", errors="ignore").strip()
             comment = record[64:record_size].decode("utf-8", errors="ignore").strip()
+            #print(f"{addr} = {comment}")
             if addr:
                 address_map[addr] = comment
         mm.close()
@@ -301,7 +303,7 @@ def main():
 
     # run the address comment loader program
     exe_path = Path(__file__).parent / "loader\\address_comment_loader.exe"
-    print(exe_path)
+    #print(exe_path)
     run(str(exe_path))
 
     # find file locations
@@ -340,6 +342,9 @@ def main():
 
     # loop through the addresses and compare to the array with comments
     for i in tqdm(range(address_array_len)):
+        
+        picked = None
+        
         if lookup_addresses[i][0] is None:
             continue
         elif len(lookup_addresses[i][0]) == 4:
@@ -347,6 +352,9 @@ def main():
         else:
             searched_address = lookup_addresses[i][0]
 
+        #print(f"From ScreenWorks: {searched_address} = {sw_addr_comment_map.get(searched_address)}")
+        #print(f"From Toyopuc:  {searched_address} = {toyo_addr_comment_map.get(searched_address)}")
+        
         if toyo_exists:
             toyo_result = toyo_addr_comment_map.get(searched_address)
         else:
@@ -360,6 +368,17 @@ def main():
             sw_result = None
 
         if isinstance(toyo_result, str) and is_valid_by_regex(toyo_result):
+            if toyo_result is not None:
+                ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[
+                    i
+                ][0]
+                ws.cell(row=lookup_addresses[i][1], column=7).value = (
+                    toyo_addr_comment_map.get(searched_address)
+                )
+                toyo_match_count += 1
+                continue
+        
+        elif isinstance(sw_result, str) and is_valid_by_regex(sw_result):
             if sw_result is not None:
                 ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[
                     i
@@ -369,29 +388,24 @@ def main():
                 )
                 sw_match_count += 1
                 continue
-        elif isinstance(toyo_result, str) and toyo_result == "TOTAL FAULT SPARE":
-            if sw_result is not None:
-                ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[
-                    i
-                ][0]
-                ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                    sw_addr_comment_map.get(searched_address)
-                )
-                sw_match_count += 1
-                continue
-
+        
+        #print(f"Toyopuc result = {toyo_result}")
+        #print(f"ScreenWorks result = {sw_result}")
+        
         if toyo_result is not None:
             ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
             ws.cell(row=lookup_addresses[i][1], column=7).value = (
                 toyo_addr_comment_map.get(searched_address)
             )
             toyo_match_count += 1
+            print(f"{searched_address} came from Toyopuc")
         elif sw_result is not None:
             ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
             ws.cell(row=lookup_addresses[i][1], column=7).value = (
                 sw_addr_comment_map.get(searched_address)
             )
             sw_match_count += 1
+            print(f"{searched_address} came from ScreenWorks")
 
     # save changes to the output file
     wb.save(file_locs[1])
