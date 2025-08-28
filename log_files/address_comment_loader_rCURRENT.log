@@ -1,0 +1,4 @@
+[INFO] [2025-08-28 15:21:20] - Found 4653 comments in the ScreenWorks csv file.
+[INFO] [2025-08-28 15:21:20] - Found 8939 comments in the Toyopuc csv file.
+[INFO] [2025-08-28 15:21:20] - Wrote bins\sw_comments.bin file and bins\toyo_comments.bin file.
+[INFO] [2025-08-28 15:21:20] - Execution time: 68.32ms

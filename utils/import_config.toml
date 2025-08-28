@@ -1,0 +1,75 @@
+# ============================
+# General behavior
+# ============================
+[general]
+
+# Logging level
+#   "DEBUG"    → troubleshooting and debugging
+#   "INFO"     → general operation logging (default)
+#   "WARN"     → unexpected behavior but program still works
+#   "ERROR"    → serious issues that will prevent the program from running correctly
+#   "CRITICAL" → something has gone horribly wrong, program cannot continue to run
+log_level = "DEBUG"
+
+# Where logger outputs
+#   "file" → to file only
+#   "console" → to terminal only
+#   "both" → to file and terminal
+log_output = "file"
+
+# If true, all matches are case-insensitive.
+#   Example: "fault spare 3" == "FAULT SPARE 3"
+case_insensitive = true
+
+# How regexes should match:
+#   "fullmatch" → pattern must match the entire string
+#   "search"    → pattern can match anywhere inside the string
+regex_match = "fullmatch"
+
+
+# ============================
+# Allowlist
+# ============================
+[allow]
+
+# Exact lines that should be *kept* even if they match a noise pattern.
+# Good for special SPARE lines you actually want to preserve.
+# Examples:
+#   "ALARM PL SPARE"
+#   "R/B ALARM SPARE"
+exact = ["LAMP CHECK"]
+
+# Regex patterns that should be *kept* even if they match a noise pattern.
+# Example below allows any "FAULT SCREEN FAULT 5*7" lines.
+regex = ["^FAULT SCREEN FAULT 5[A-E]7$"]
+
+
+# ============================
+# Denylist
+# ============================
+[deny]
+
+# Exact lines that should always be dropped, even if they don’t match noise.
+exact = []
+
+# Regex patterns that should always be dropped, even if they don’t match noise.
+regex = []
+
+
+# ============================
+# Noise patterns
+# ============================
+[noise]
+
+# A list of regexes that describe “junk” comments you want to filter out.
+# Each line is tested; if it matches any of these, it’s dropped (unless in [allow]).
+patterns = [
+  # Any line that ends with "SPARE" (with optional number):
+  "^(?:.+\\s)?SPARE(?:\\s+\\d+)?$",
+
+  # Screen fault grid addresses like "FAULT SCREEN FAULT 5D7":
+  "^FAULT\\s+SCREEN\\s+FAULT\\s+[1-9][A-E][1-8]$",
+
+  # Placeholder "SAFETY FAULT NOT SPECIFIED <n>" lines:
+  "^SAFETY\\s+FAULT\\s+NOT\\s+SPECIFIED(?:\\s+\\d+)?$",
+]

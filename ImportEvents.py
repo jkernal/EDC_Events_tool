@@ -10,11 +10,28 @@
 from mmap import ACCESS_READ, mmap
 from os import R_OK, W_OK, X_OK, access, getcwd, listdir, system
 from pathlib import Path
-from re import fullmatch
+from re import fullmatch, search
 from shutil import copy
 from subprocess import check_call, check_output, run
 from sys import executable, version
 from time import perf_counter
+from datetime import datetime
+
+#import utils
+from utils.load_config import load_config
+from utils.logger_setup import setup_logging
+
+WRK_DIR = getcwd()
+
+CFG = load_config(f"{WRK_DIR}\\utils\\import_config.toml")
+
+LOG = setup_logging(__name__,
+                    CFG["general"]["log_level"],
+                    log_dest=CFG["general"]["log_output"],
+                    filename=f"{WRK_DIR}\\log_files\\ImportEvents_{datetime.now():%Y%m%d_%H%M%S}.log"
+                    )
+
+LOG.debug(f"Current Working Directory: {WRK_DIR}")
 
 ansi = {
     "Black": "\u001b[30m",
@@ -39,8 +56,6 @@ ansi = {
 }
 
 update_check_enabled = True
-
-debug_enabled = False
 
 v = "v2.0.2"
 
@@ -99,22 +114,17 @@ def preamble():
     )
     print(v)
 
-    if debug_enabled:
-        if version[:4] != "3.10":
-            print(
-                f"{ansi['Bright Yellow']}***Warning: The version of Python is different from what this script was written on.***{ansi['Reset']}"
-            )
-            print("\u001b[37m\u001b[0mPython Version: " + version[:7])
+    LOG.debug("Python Version: " + version[:7])
 
     if update_check_enabled:
         owner = "jkernal"
         repo = "EDC_Events_tool"
         print("Checking for updates...", end="", flush=True)
         try:
-            response = get(
-                f"https://api.github.com/repos/{owner}/{repo}/releases/latest",
-                timeout=5,
-            )
+            url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+            response = get(url, timeout=5)
+            LOG.debug(f"Sent GET request to: {url}")
+            LOG.debug(f"{response}")
             print("[DONE]")
             if v != response.json()["tag_name"]:
                 print(
@@ -122,7 +132,7 @@ def preamble():
                 )
         except Exception as e:
             print("[FAILED]")
-            print(
+            LOG.warning(
                 f"\u001b[33;1m***Warning: Could not connect to repository. Version check failed.***\n{e}"
             )
 
@@ -136,54 +146,63 @@ def manages_files():
         list: File paths for the template, output copy, and input file.
     """
 
-    wrk_dir = getcwd()
-    temp_dir, out_dir = wrk_dir + "\\template", wrk_dir + "\\output"
+    temp_dir = f"{WRK_DIR}\\template"
     # confirming files
     try:
-        temp_loc = temp_dir + "\\" + listdir(temp_dir)[0]
+        LOG.debug(f"Template directory: {temp_dir}")
+        temp_loc = f"{temp_dir}\\{listdir(temp_dir)[0]}"
+        LOG.debug(f"Template location: {temp_loc}")
     except FileNotFoundError:
-        print(temp_dir)
-        print("\n")
+        LOG.error(f"Template directory not found. {temp_dir}")
         print(
             f"{ansi['Bold']}{ansi['Bright Red']}The template directory was not found.\n\nPlease add the template directory and restart."
         )
         done()
     except IndexError:
-        print("\n")
+        LOG.error(f"Template file not found. {temp_dir}")
         print(
             f"{ansi['Bold']}{ansi['Bright Red']}The template file was not found.\n\nPlease add the template file to the template directory and restart."
         )
         done()
     # Copying template file to output directory
     try:
-        output_path = out_dir + "\\out1_" + listdir(temp_dir)[0]
+        output_path = f"{WRK_DIR}\\out_{listdir(temp_dir)[0]}"
+        LOG.debug(f"Output file path: {output_path}")
         copy(temp_loc, output_path)
+        LOG.info("Copied template file successfully.")
     except FileNotFoundError:
-        print("\n")
         print(
             f"{ansi['Bold']}{ansi['Bright Red']}The output directory was not found.\n\nPlease add the output directory and restart."
         )
         done()
     except Exception as e:
+        LOG.error(f"Something went wrong copying the template file to {output_path}. {e}")
         print(
             f"{ansi['Bold']}{ansi['Bright Red']}Make sure to close the template file or make sure template file is not being used by another program."
         )
-        print(e)
         done()
 
-    toyo_loc = f"{wrk_dir}\\loader\\bins\\toyo_comments.bin"
+    toyo_loc = f"{WRK_DIR}\\loader\\bins\\toyo_comments.bin"
 
     toyo_path = Path(toyo_loc)
+    LOG.debug(f"Toyopuc file location: {toyo_path}")
 
     if not toyo_path.exists():
         toyo_loc = None
+        LOG.warning("Toyopuc binary file not found.")
+    else:
+        LOG.info("Toyopuc binary file found.")
 
-    sw_loc = f"{wrk_dir}\\loader\\bins\\sw_comments.bin"
+    sw_loc = f"{WRK_DIR}\\loader\\bins\\sw_comments.bin"
 
     sw_path = Path(sw_loc)
-
+    LOG.debug(f"ScreenWorks file location: {sw_path}")
+    
     if not sw_path.exists():
         sw_loc = None
+        LOG.warning("ScreenWorks binary file not found.")
+    else:
+        LOG.info("ScreenWorks binary file found.")
 
     locations = [temp_loc, output_path, toyo_loc, sw_loc]
     return locations
@@ -245,7 +264,7 @@ def load_shm_as_dict(path, record_size=160):
             record = mm[i : i + record_size]
             addr = record[:64].decode("utf-8", errors="ignore").strip()
             comment = record[64:record_size].decode("utf-8", errors="ignore").strip()
-            #print(f"{addr} = {comment}")
+            LOG.debug(f"From {path}: {addr} = {comment}")
             if addr:
                 address_map[addr] = comment
         mm.close()
@@ -268,22 +287,29 @@ def remove_first_zero_if_long(s):
         return
     if len(s) > 5:
         zero_index = s.find("0")
-        if zero_index != -1:
+        if zero_index != -1 and zero_index < len(s) - 3:
+            LOG.debug(f"Transformed address from {s} to {s[:zero_index] + s[zero_index + 1 :]}")
             return s[:zero_index] + s[zero_index + 1 :]
     return s
 
 
 def is_valid_by_regex(s: str) -> bool:
 
-    patterns = [r"FAULT\s?\d[A-Z]\d", r".*FAULT SPARE \d{1,2}$"]
+    patterns = [r"FAULT\s?\d[A-Z]\d", r".*FAULT SPARE \d{1,2}$", r"(?:\b(?:TOTAL|OTHER)\s+)?FAULT(?:\s+\w+)?(?:\s+FAULT)?\s+\w+"]
 
     if not isinstance(s, str):
+        LOG.debug(f"'{s}' is not a string. Rejected by regex.")
         return False  # or True if you want to skip None-like inputs
-
+    
     for pattern in patterns:
-        if fullmatch(pattern, s):
+        if fullmatch(pattern, s) and CFG["general"]["regex_match"] == "fullmatch":
+            LOG.debug(f"'{s}' was rejected by regex pattern: {pattern}")
             return False  # it matched a disallowed pattern
+        elif search(pattern, s) and CFG["general"]["regex_match"] == "search":
+            LOG.debug(f"'{s}' was rejected by regex pattern: {pattern}")
+            return False
 
+    LOG.debug(f"'{s}' was valid by regex.")
     return True  # didn't match any patterns
 
 
@@ -302,9 +328,10 @@ def main():
     preamble()
 
     # run the address comment loader program
-    exe_path = Path(__file__).parent / "loader\\address_comment_loader.exe"
-    #print(exe_path)
-    run(str(exe_path))
+    loader_exe_path = Path(__file__).parent / "loader\\address_comment_loader.exe"
+    LOG.debug(f"Loader exe location: {loader_exe_path}")
+    #print(loader_exe_path)
+    run(str(loader_exe_path))
 
     # find file locations
     file_locs = (
@@ -355,13 +382,14 @@ def main():
         
         if toyo_exists:
             toyo_result = toyo_addr_comment_map.get(searched_address)
+            LOG.debug(f"Result from Toyopuc file: {searched_address} = {toyo_result}")
         else:
             toyo_result = None
 
         if sw_exists:
-            sw_result = sw_addr_comment_map.get(
-                remove_first_zero_if_long(searched_address)
-            )
+            sw_address = remove_first_zero_if_long(searched_address)
+            sw_result = sw_addr_comment_map.get(sw_address)
+            LOG.debug(f"Result from ScreenWorks file: {sw_address} = {sw_result}")
         else:
             sw_result = None
 
@@ -373,8 +401,8 @@ def main():
                 ws.cell(row=lookup_addresses[i][1], column=7).value = (
                     toyo_addr_comment_map.get(searched_address)
                 )
+                LOG.debug(f"{searched_address} comment is from Toyopuc.")
                 toyo_match_count += 1
-                #print(f"{searched_address} came from Toyopuc")
                 continue
         
         elif isinstance(sw_result, str) and is_valid_by_regex(sw_result):
@@ -385,30 +413,28 @@ def main():
                 ws.cell(row=lookup_addresses[i][1], column=7).value = (
                     sw_addr_comment_map.get(searched_address)
                 )
+                LOG.debug(f"{searched_address} comment is from ScreenWorks.")
                 sw_match_count += 1
-                #print(f"{searched_address} came from ScreenWorks")
                 continue
-        
-        #print(f"Toyopuc result = {toyo_result}")
-        #print(f"ScreenWorks result = {sw_result}")
         
         if toyo_result is not None:
             ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
             ws.cell(row=lookup_addresses[i][1], column=7).value = (
                 toyo_addr_comment_map.get(searched_address)
             )
+            LOG.debug(f"{searched_address} comment is from Toyopuc.")
             toyo_match_count += 1
-            #print(f"{searched_address} came from Toyopuc")
         elif sw_result is not None:
             ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
             ws.cell(row=lookup_addresses[i][1], column=7).value = (
                 sw_addr_comment_map.get(searched_address)
             )
+            LOG.debug(f"{searched_address} comment is from ScreenWorks.")
             sw_match_count += 1
-            #print(f"{searched_address} came from ScreenWorks")
 
     # save changes to the output file
     wb.save(file_locs[1])
+    LOG.info(f"Successfully wrote to {file_locs[1]}")
 
     # display stats and warning if needed
     print("\nDone.", flush=True)
