@@ -57,7 +57,7 @@ ansi = {
 
 update_check_enabled = True
 
-v = "v2.0.2"
+v = "v2.1.0"
 
 t1 = perf_counter()
 

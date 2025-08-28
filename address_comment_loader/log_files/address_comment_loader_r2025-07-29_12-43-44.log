@@ -1,8 +1,0 @@
-[DEBUG] [2025-07-29 12:40:16] - Working directory: C:\code\EDC_Events_tool\address_comment_loader\target\debug
-[DEBUG] [2025-07-29 12:40:16] - User config: Settings { log_level: "debug", screenworks_csv_dir: "ScreenWorks", toyopuc_csv_dir: "Toyopuc", sw_output_path: "bin\\sw_comments.bin", sw_addr_col: 11, sw_comment_col: 7, toyo_output_path: "bin\\toyo_comments.bin", toyo_addr_col: 1, toyo_comment_col: 2 }
-[ERROR] [2025-07-29 12:40:16] - The system cannot find the path specified. (os error 3)
-[INFO] [2025-07-29 12:40:16] - ScreenWorks csv doesn't exist.
-[ERROR] [2025-07-29 12:40:16] - The system cannot find the path specified. (os error 3)
-[INFO] [2025-07-29 12:40:16] - Toyopuc csv doesn't exist.
-[INFO] [2025-07-29 12:40:16] - No files wrote. Something might be wrong.
-[INFO] [2025-07-29 12:40:16] - Execution time: 11.70ms
