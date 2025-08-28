@@ -1,3 +1,4 @@
+out_BW Specific Fault Layout Toyopuc V9.1.xlsx
 address_comment_loader/target/*
 output/*
 !output/.gitkeep
@@ -8,3 +9,5 @@ Toyopuc/*
 loader/bin/*
 !loader/bin/.gitkeep
 loader/log_files/*
+!log_files/.gitkeep
+log_files/*

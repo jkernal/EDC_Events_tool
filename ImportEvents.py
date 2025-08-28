@@ -128,7 +128,7 @@ def preamble():
             print("[DONE]")
             if v != response.json()["tag_name"]:
                 print(
-                    f"{ansi['Bright Yellow']}***There is a new release of this tool.***\nGo to: https:\\github.com/jkernal/EDC_Events_tool"
+                    f"{ansi['Bright Yellow']}***There is a new release of this tool.***\nGo to: https://github.com/jkernal/EDC_Events_tool/releases"
                 )
         except Exception as e:
             print("[FAILED]")
@@ -349,6 +349,8 @@ def main():
     lookup_addresses = get_address_array_from_template(ws)
 
     if file_locs[2] is None and file_locs[3] is None:
+        LOG.error("No comment files were found.")
+        print("No comment files were found. Please provide comment files and try again.")
         done()
 
     if file_locs[2] is not None:
