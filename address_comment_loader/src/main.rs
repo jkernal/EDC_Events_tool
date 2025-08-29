@@ -51,7 +51,7 @@ fn get_first_file(dir_path: &str) -> Option<PathBuf> {
     //loop through the array of entries and return the first file. (there could be directories in the entries array)
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_file() && is_csv_file(&path){
+        if path.is_file() && is_csv_file(&path) {
             return Some(path);
         }
         
