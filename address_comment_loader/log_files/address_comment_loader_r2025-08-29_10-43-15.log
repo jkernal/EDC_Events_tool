@@ -1,0 +1,14 @@
+[DEBUG] [2025-08-29 10:40:21] - Working directory: C:\code\EDC_Events_tool\address_comment_loader\target\debug
+[DEBUG] [2025-08-29 10:40:21] - User config: Settings { log_level: "debug", screenworks_csv_dir: "ScreenWorks", toyopuc_csv_dir: "Toyopuc", sw_output_path: "bins\\sw_comments.bin", sw_addr_col: 11, sw_comment_col: 7, toyo_output_path: "bins\\toyo_comments.bin", toyo_addr_col: 1, toyo_comment_col: 2 }
+[DEBUG] [2025-08-29 10:40:21] - Screenworks output path: C:\code\EDC_Events_tool\address_comment_loader\target\debug\bins\sw_comments.bin
+[DEBUG] [2025-08-29 10:40:21] - Toyopuc output path: C:\code\EDC_Events_tool\address_comment_loader\target\debug\bins\toyo_comments.bin
+[DEBUG] [2025-08-29 10:40:21] - ScreenWorks directory: C:\code\EDC_Events_tool\address_comment_loader\target\ScreenWorks
+[ERROR] [2025-08-29 10:40:21] - The system cannot find the path specified. (os error 3)
+[INFO] [2025-08-29 10:40:21] - ScreenWorks csv doesn't exist.
+[DEBUG] [2025-08-29 10:40:21] - Path to ScreenWorks csv: 
+[DEBUG] [2025-08-29 10:40:21] - Toyopuc directory: C:\code\EDC_Events_tool\address_comment_loader\target\Toyopuc
+[ERROR] [2025-08-29 10:40:21] - The system cannot find the path specified. (os error 3)
+[INFO] [2025-08-29 10:40:21] - Toyopuc csv doesn't exist.
+[DEBUG] [2025-08-29 10:40:21] - Path to Toyopuc csv: 
+[INFO] [2025-08-29 10:40:21] - No files wrote. Something might be wrong.
+[INFO] [2025-08-29 10:40:21] - Execution time: 10.59ms
