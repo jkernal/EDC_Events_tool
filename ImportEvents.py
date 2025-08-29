@@ -13,7 +13,7 @@ t1 = perf_counter()
 from mmap import ACCESS_READ, mmap
 from os import R_OK, W_OK, X_OK, access, getcwd, listdir, system
 from pathlib import Path
-from re import fullmatch, search
+from re import fullmatch, search, compile, IGNORECASE
 from shutil import copy
 from subprocess import check_call, check_output, run
 from sys import executable
@@ -62,6 +62,13 @@ ansi = {
 update_check_enabled = True
 
 v = "2.1.0"
+
+pattern_flags = IGNORECASE if CFG["general"]["case_insensitive"] else 0
+REGEX_PATTERNS = [
+    compile(p, pattern_flags)
+    for p in CFG.get("noise", {}).get("patterns", [])
+]
+LOG.debug(f"{REGEX_PATTERNS}")
 
 def install_lib(lib):
     """
@@ -113,7 +120,7 @@ def preamble():
     print(
         f"{ansi['Underline']}{ansi['Bright Magenta']}Events Layout Import Tool{ansi['Reset']}"
     )
-    print(v)
+    print(f"v{v}")
 
     LOG.debug("Python Version: " + sys_version[:7])
 
@@ -251,10 +258,12 @@ def get_address_array_from_template(sheet):
         list: A list of [address, row number] pairs.
     """
 
-    array = []
-    for i in range(sheet.max_row):
-        array.append([sheet.cell(i + 3, 2).value, i + 3])
-    return array
+    addresses = []
+    # Start at row 3 to skip header rows in column B
+    for row in range(3, sheet.max_row + 1):
+        cell = sheet.cell(row=row, column=2)  # column B
+        addresses.append([cell.value, row])
+    return addresses
 
 
 def load_shm_as_dict(path, record_size=160):
@@ -299,19 +308,19 @@ def remove_first_zero_if_long(s):
 
 def is_valid_by_regex(s: str) -> bool:
 
-    patterns = [r"FAULT\s?\d[A-Z]\d", r".*FAULT SPARE \d{1,2}$", r"(?:\b(?:TOTAL|OTHER)\s+)?FAULT(?:\s+\w+)?(?:\s+FAULT)?\s+\w+"]
-
     if not isinstance(s, str):
         LOG.debug(f"'{s}' is not a string. Rejected by regex.")
         return False  # or True if you want to skip None-like inputs
     
-    for pattern in patterns:
-        if fullmatch(pattern, s) and CFG["general"]["regex_match"] == "fullmatch":
-            LOG.debug(f"'{s}' was rejected by regex pattern: {pattern}")
-            return False  # it matched a disallowed pattern
-        elif search(pattern, s) and CFG["general"]["regex_match"] == "search":
-            LOG.debug(f"'{s}' was rejected by regex pattern: {pattern}")
-            return False
+    for pattern in REGEX_PATTERNS:
+        if CFG["general"]["regex_match"] == "fullmatch":
+            if pattern.fullmatch(s):
+                LOG.debug(f"'{s}' was rejected by regex pattern: {pattern.pattern}")
+                return False  # it matched a disallowed pattern
+        else:
+            if pattern.search(s):
+                LOG.debug(f"'{s}' was rejected by regex pattern: {pattern.pattern}")
+                return False
 
     LOG.debug(f"'{s}' was valid by regex.")
     return True  # didn't match any patterns
@@ -374,17 +383,14 @@ def main():
     print(f"\n{ansi['Reset']}{ansi['Green']}Working on it...", flush=True, end="")
 
     # loop through the addresses and compare to the array with comments
-    for i in tqdm(range(address_array_len)):
+    for address, row in tqdm(lookup_addresses):
         
-        if lookup_addresses[i][0] is None:
+        if address is None:
             continue
-        elif len(lookup_addresses[i][0]) == 4:
-            searched_address = "P1-" + lookup_addresses[i][0]
+        elif len(address) == 4:
+            searched_address = "P1-" + address
         else:
-            searched_address = lookup_addresses[i][0]
-
-        #print(f"From ScreenWorks: {searched_address} = {sw_addr_comment_map.get(searched_address)}")
-        #print(f"From Toyopuc:  {searched_address} = {toyo_addr_comment_map.get(searched_address)}")
+            searched_address = address
         
         if toyo_exists:
             toyo_result = toyo_addr_comment_map.get(searched_address)
@@ -401,40 +407,28 @@ def main():
 
         if isinstance(toyo_result, str) and is_valid_by_regex(toyo_result):
             if toyo_result is not None:
-                ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[
-                    i
-                ][0]
-                ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                    toyo_addr_comment_map.get(searched_address)
-                )
+                ws.cell(row=row, column=6).value = address
+                ws.cell(row=row, column=7).value = toyo_result
                 LOG.debug(f"{searched_address} comment is from Toyopuc.")
                 toyo_match_count += 1
                 continue
         
         elif isinstance(sw_result, str) and is_valid_by_regex(sw_result):
             if sw_result is not None:
-                ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[
-                    i
-                ][0]
-                ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                    sw_addr_comment_map.get(searched_address)
-                )
+                ws.cell(row=row, column=6).value = address
+                ws.cell(row=row, column=7).value = sw_result
                 LOG.debug(f"{searched_address} comment is from ScreenWorks.")
                 sw_match_count += 1
                 continue
         
         if toyo_result is not None:
-            ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
-            ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                toyo_addr_comment_map.get(searched_address)
-            )
+            ws.cell(row=row, column=6).value = address
+            ws.cell(row=row, column=7).value = toyo_result
             LOG.debug(f"{searched_address} comment is from Toyopuc.")
             toyo_match_count += 1
         elif sw_result is not None:
-            ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
-            ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                sw_addr_comment_map.get(searched_address)
-            )
+            ws.cell(row=row, column=6).value = address
+            ws.cell(row=row, column=7).value = sw_result
             LOG.debug(f"{searched_address} comment is from ScreenWorks.")
             sw_match_count += 1
 
