@@ -334,7 +334,7 @@ fn main() {
         match fs::remove_file(&sw_out_path) {
             Ok(_) => {}
             Err(error) => {
-                info!("Failed to delete {sw_path_str} | {error}");
+                error!("Failed to delete {sw_path_str} | {error}");
             }
         }
     }
@@ -350,7 +350,7 @@ fn main() {
         match fs::remove_file(&toyo_out_path) {
             Ok(_) => {}
             Err(error) => {
-                info!("Failed to delete {toyo_path_str} | {error}");
+                error!("Failed to delete {toyo_path_str} | {error}");
             }
         }
     }

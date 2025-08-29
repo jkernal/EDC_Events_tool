@@ -20,7 +20,7 @@ pub fn init_logger(level: &str, basename: &str) {
     let basename = basename.to_string();
     //ensures it can only be initialized once
     INIT.call_once(move || {
-        Logger::try_with_str(level)
+        Logger::try_with_str(level.to_lowercase())
             .unwrap()
             //settings for the format of the output
             .format(|writer, now, record| {

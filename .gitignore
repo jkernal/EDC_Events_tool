@@ -1,5 +1,7 @@
 out_BW Specific Fault Layout Toyopuc V9.1.xlsx
 address_comment_loader/target/*
+address_comment_loader/log_files/*
+!address_comment_loader/log_files/.gitkeep
 output/*
 !output/.gitkeep
 ScreenWorks/*
