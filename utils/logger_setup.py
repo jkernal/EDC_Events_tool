@@ -30,4 +30,3 @@ def setup_logging(logger_name, level, filename=__name__, log_dest="file", format
         logger.addHandler(terminal_handler)
     
     return logger
-        

@@ -49,5 +49,3 @@ pub fn init_logger(level: &str, basename: &str) {
             .unwrap();
     });
 }
-
-

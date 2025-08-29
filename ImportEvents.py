@@ -269,7 +269,6 @@ def load_shm_as_dict(path, record_size=160):
             LOG.debug(f"From {path}: {addr} = {comment}")
             if addr:
                 address_map[addr] = comment
-        mm.close()
     return address_map
 
 
