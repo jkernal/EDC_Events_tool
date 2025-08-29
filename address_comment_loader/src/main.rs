@@ -25,7 +25,7 @@ mod config;
 
 
 
-fn get_first_file(dir_path: &str) -> Option<PathBuf> {
+fn get_first_csv_file(dir_path: &str) -> Option<PathBuf> {
     /*
     Get the path to the first file in the directory.
 
@@ -362,7 +362,7 @@ fn main() {
     debug!("ScreenWorks directory: {sw_csv_str}");
 
     //get the pathbuf of the screenworks csv file
-    let screenworks_csv_pathbuf = match get_first_file(&sw_csv_str) {
+    let screenworks_csv_pathbuf = match get_first_csv_file(&sw_csv_str) {
         Some(path) => {
             screenworks_csv_exists = true;
             path
@@ -385,7 +385,7 @@ fn main() {
     debug!("Toyopuc directory: {toyo_csv_str}");
 
     //get the pathbuf to the toyopuc csv
-    let toyopuc_csv_pathbuf = match get_first_file(&toyo_csv_str) {
+    let toyopuc_csv_pathbuf = match get_first_csv_file(&toyo_csv_str) {
         Some(path) => {
             toyopuc_csv_exists = true;
             path
