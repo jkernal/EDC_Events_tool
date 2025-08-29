@@ -5,7 +5,7 @@
 #   "warn"     → unexpected behavior but program still works
 #   "error"    → serious issues that will prevent the program from running correctly
 #   "critical" → something has gone horribly wrong, program cannot continue to run
-log_level = "debug"
+log_level = "info"
 # Paths to CSV directories and output files
 screenworks_csv_dir = "ScreenWorks"
 toyopuc_csv_dir = "Toyopuc"
