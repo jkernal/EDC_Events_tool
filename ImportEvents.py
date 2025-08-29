@@ -316,13 +316,13 @@ def is_valid_by_regex(s: str) -> bool:
 
 def main():
     """
-    Main execution flow:
-    - Initializes script
-    - Confirms and copies files
-    - Checks file permissions
-    - Extracts addresses from Excel and comments from CSV
-    - Matches and writes comments to the Excel output
-    - Saves file and reports results
+    * Main execution flow:
+    * - Initializes script
+    * - Confirms and copies files
+    * - Checks file permissions
+    * - Extracts addresses from Excel and comments from CSV
+    * - Matches and writes comments to the Excel output
+    * - Saves file and reports results
     """
 
     # run preamble

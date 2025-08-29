@@ -95,7 +95,7 @@ fn pad_or_truncate(input: &str, size: usize) -> Vec<u8> {
 
 fn get_comments(csv_path: &str, addr_index: usize, comment_index: usize, encoding: Option<&'static Encoding>, source: &str) -> Vec<Vec<u8>> {
     /*
-    Get all if the address and comments in the screenworks export csv and put them in an array.
+    Get all if the address and comments in the csv file and put them in an array.
 
     Arguments:
         csv_path (&str): the path to the screenworks csv.
@@ -216,7 +216,7 @@ fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
         bool: Weather or not the write was successful.
     */
 
-    //create .bin file
+    // create .bin file
     let output_file_result = File::create(bin_path);
 
     //handle file creation errors
@@ -228,7 +228,7 @@ fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
         }
     };
 
-    //write all elements in the array
+    // write all elements in the array
     for chunk in contents {
 
         match output_file.write_all(&chunk) {
@@ -240,7 +240,7 @@ fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
         }
     }
 
-    true //indicate that the write was successful
+    true // indicate that the write was successful
 }
 
 
