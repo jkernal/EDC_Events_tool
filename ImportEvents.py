@@ -332,7 +332,11 @@ def main():
     loader_exe_path = Path(__file__).parent / "loader" / "address_comment_loader.exe"
     LOG.debug(f"Loader exe location: {loader_exe_path}")
     #print(loader_exe_path)
-    run(str(loader_exe_path))
+    exe_complete = run(str(loader_exe_path), check=True)
+    LOG.debug(f"{exe_complete}")
+    
+    if exe_complete.returncode < 0:
+        print(f"{ansi["Bright Red"]}The loader exited with an error.{ansi['Reset']}")
 
     # find file locations
     file_locs = (
