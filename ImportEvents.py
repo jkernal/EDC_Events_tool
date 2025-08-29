@@ -7,15 +7,19 @@
 # VERSION: v2.0.0
 # START DATE: 17 Oct 22
 
+from time import perf_counter
+t1 = perf_counter()
+
 from mmap import ACCESS_READ, mmap
 from os import R_OK, W_OK, X_OK, access, getcwd, listdir, system
 from pathlib import Path
 from re import fullmatch, search
 from shutil import copy
 from subprocess import check_call, check_output, run
-from sys import executable, version
-from time import perf_counter
+from sys import executable
+from sys import version as sys_version
 from datetime import datetime
+from packaging import version
 
 #import utils
 from utils.load_config import load_config
@@ -57,10 +61,7 @@ ansi = {
 
 update_check_enabled = True
 
-v = "v2.1.0"
-
-t1 = perf_counter()
-
+v = "2.1.0"
 
 def install_lib(lib):
     """
@@ -114,7 +115,7 @@ def preamble():
     )
     print(v)
 
-    LOG.debug("Python Version: " + version[:7])
+    LOG.debug("Python Version: " + sys_version[:7])
 
     if update_check_enabled:
         owner = "jkernal"
@@ -126,9 +127,12 @@ def preamble():
             LOG.debug(f"Sent GET request to: {url}")
             LOG.debug(f"{response}")
             print("[DONE]")
-            if v != response.json()["tag_name"]:
+            github_tag = response.json()["tag_name"].lstrip("v")
+            cur_version = version.parse(v)
+            newest_version = version.parse(github_tag)
+            if cur_version < newest_version:
                 print(
-                    f"{ansi['Bright Yellow']}***There is a new release of this tool.***\nGo to: https://github.com/jkernal/EDC_Events_tool/releases"
+                    f"{ansi['Bright Yellow']}***There is a new release of this tool.***\nGo to: https://github.com/{owner}/{repo}/releases"
                 )
         except Exception as e:
             print("[FAILED]")
@@ -350,7 +354,7 @@ def main():
 
     if file_locs[2] is None and file_locs[3] is None:
         LOG.error("No comment files were found.")
-        print("No comment files were found. Please provide comment files and try again.")
+        print(f"\n{ansi['Bright Yellow']}No comment files were found. Please provide comment files and try again.")
         done()
 
     if file_locs[2] is not None:
