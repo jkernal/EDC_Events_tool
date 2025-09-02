@@ -18,10 +18,9 @@ Extract and put the folder in whatever place you like.
 
 ## Using the Tool
 Ensure that the .py file has its own directory(folder).
-##### Inside the folder the .py file is located in, you will need 4 more directories(folders):
+##### Inside the folder the .py file is located in, you will need 3 more directories(folders):
 - Toyopuc
 - Screenworks
-- Output
 - Template
   
 Ensure folder names are exactly as stated above, otherwise errors will occur.(The reason for doing this is so the file names will not matter)
