@@ -154,7 +154,7 @@ def manages_files():
         list: File paths for the template, output copy, and input file.
     """
 
-    temp_dir = WRK_DIR / "template"
+    temp_dir = WRK_DIR.parent / "template"
     # confirming files
     try:
         LOG.debug(f"Template directory: {temp_dir}")
@@ -174,7 +174,7 @@ def manages_files():
         done()
     # Copying template file to output directory
     try:
-        output_path = WRK_DIR / f"out_{temp_loc.name}"
+        output_path = WRK_DIR.parent / f"out_{temp_loc.name}"
         LOG.debug(f"Output file path: {output_path}")
         copy(temp_loc, output_path)
         LOG.info("Copied template file successfully.")
@@ -190,7 +190,7 @@ def manages_files():
         )
         done()
 
-    toyo_loc = WRK_DIR / "loader" / "bins" / "toyo_comments.bin"
+    toyo_loc = WRK_DIR.parent / "loader" / "bins" / "toyo_comments.bin"
     LOG.debug(f"Toyopuc file location: {toyo_loc}")
 
     if not toyo_loc.exists():
@@ -199,7 +199,7 @@ def manages_files():
     else:
         LOG.info("Toyopuc binary file found.")
 
-    sw_loc = WRK_DIR / "loader" / "bins" / "sw_comments.bin"
+    sw_loc = WRK_DIR.parent / "loader" / "bins" / "sw_comments.bin"
 
     LOG.debug(f"ScreenWorks file location: {sw_loc}")
     
@@ -329,7 +329,7 @@ def main():
     preamble()
 
     # run the address comment loader program
-    loader_exe_path = Path(__file__).parent / "loader" / "address_comment_loader.exe"
+    loader_exe_path = WRK_DIR.parent / "loader" / "address_comment_loader.exe"
     LOG.debug(f"Loader exe location: {loader_exe_path}")
     #print(loader_exe_path)
     exe_complete = run(str(loader_exe_path), check=True)

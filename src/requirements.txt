@@ -1,0 +1,5 @@
+openpyxl
+requests
+tqdm
+packaging
+pytest
