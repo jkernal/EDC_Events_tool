@@ -145,7 +145,7 @@ def preamble():
             )
 
 
-def manages_files():
+def manages_files() -> list:
     """
     Confirms the presence of template, input, and output directories and files.
     Copies the template file into the output directory for modification.
@@ -237,7 +237,7 @@ def perm_check(locs):
     return None
 
 
-def get_address_array_from_template(sheet):
+def get_address_array_from_template(sheet) -> list:
     """
     Extracts address values from column B of the Excel worksheet starting from row 3.
 
@@ -256,7 +256,7 @@ def get_address_array_from_template(sheet):
     return addresses
 
 
-def load_shm_as_dict(path, record_size=160):
+def load_shm_as_dict(path, record_size=160) -> dict:
 
     address_map = {}
 

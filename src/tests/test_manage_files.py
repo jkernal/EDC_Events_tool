@@ -3,7 +3,7 @@ import src.ImportEvents as ImportEvents
 from ImportEvents import manages_files
 
 def test_manages_files(tmp_path, monkeypatch):
-    template_dir = tmp_path.parent / 'template'
+    template_dir = tmp_path / 'template'
     template_dir.mkdir()
     tpl = template_dir / 'temp.xlsx'
     tpl.write_text('')
