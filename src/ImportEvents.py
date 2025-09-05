@@ -105,7 +105,7 @@ def ensure_lib(lib: str, attr: str | None = None):
 load_workbook = ensure_lib("openpyxl", "load_workbook")
 get = ensure_lib("requests", "get")
 tqdm = ensure_lib("tqdm", "tqdm")
-version = ensure_lib("packaging.version", "version")
+version = ensure_lib("packaging.version")
 
 
 def preamble():
