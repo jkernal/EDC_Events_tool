@@ -20,7 +20,7 @@ from subprocess import check_call, check_output, run
 from sys import executable
 from sys import version as sys_version
 from datetime import datetime
-from packaging import version
+
 
 #import utils
 from utils.load_config import load_config
@@ -105,6 +105,7 @@ def ensure_lib(lib: str, attr: str | None = None):
 load_workbook = ensure_lib("openpyxl", "load_workbook")
 get = ensure_lib("requests", "get")
 tqdm = ensure_lib("tqdm", "tqdm")
+version = ensure_lib("packaging.version", "version")
 
 
 def preamble():
