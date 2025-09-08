@@ -72,6 +72,8 @@ REGEX_PATTERNS = [
 ]
 LOG.debug(f"{REGEX_PATTERNS}")
 
+REGEX_BYPASS = CFG["general"]["regex_bypass"]
+
 def install_lib(lib):
     """
     Installs the specified Python library using pip.
@@ -414,16 +416,17 @@ def main():
                 sw_match_count += 1
                 continue
         
-        if toyo_result is not None:
-            ws.cell(row=row, column=6).value = address
-            ws.cell(row=row, column=7).value = toyo_result
-            LOG.debug(f"{searched_address} comment is from Toyopuc.")
-            toyo_match_count += 1
-        elif sw_result is not None:
-            ws.cell(row=row, column=6).value = address
-            ws.cell(row=row, column=7).value = sw_result
-            LOG.debug(f"{searched_address} comment is from ScreenWorks.")
-            sw_match_count += 1
+        if REGEX_BYPASS:
+            if toyo_result is not None:
+                ws.cell(row=row, column=6).value = address
+                ws.cell(row=row, column=7).value = toyo_result
+                LOG.debug(f"{searched_address} comment is from Toyopuc.")
+                toyo_match_count += 1
+            elif sw_result is not None:
+                ws.cell(row=row, column=6).value = address
+                ws.cell(row=row, column=7).value = sw_result
+                LOG.debug(f"{searched_address} comment is from ScreenWorks.")
+                sw_match_count += 1
 
     # save changes to the output file
     wb.save(file_locs[1])

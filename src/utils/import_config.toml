@@ -9,7 +9,7 @@
 #   "WARN"     → unexpected behavior but program still works
 #   "ERROR"    → serious issues that will prevent the program from running correctly
 #   "CRITICAL" → something has gone horribly wrong, program cannot continue to run
-log_level = "INFO"
+log_level = "DEBUG"
 
 # Where logger outputs
 #   "file" → to file only
@@ -25,6 +25,9 @@ case_insensitive = true
 #   "fullmatch" → pattern must match the entire string
 #   "search"    → pattern can match anywhere inside the string
 regex_match = "fullmatch"
+
+# Toggle to bypass regex
+regex_bypass = false
 
 
 # ============================
