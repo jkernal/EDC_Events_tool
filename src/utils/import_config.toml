@@ -9,7 +9,7 @@
 #   "WARN"     → unexpected behavior but program still works
 #   "ERROR"    → serious issues that will prevent the program from running correctly
 #   "CRITICAL" → something has gone horribly wrong, program cannot continue to run
-log_level = "DEBUG"
+log_level = "INFO"
 
 # Where logger outputs
 #   "file" → to file only
