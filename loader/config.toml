@@ -1,19 +1,29 @@
 # Logging level
-#   "trace"    → extremely detailed logging
-#   "debug"    → troubleshooting and debugging
-#   "info"     → general operation logging (default)
-#   "warn"     → unexpected behavior but program still works
-#   "error"    → serious issues that will prevent the program from running correctly
-#   "critical" → something has gone horribly wrong, program cannot continue to run
-log_level = "info"
+#   "TRACE"    → extremely detailed logging
+#   "DEBUG"    → troubleshooting and debugging
+#   "INFO"     → general operation logging (default)
+#   "WARN"     → unexpected behavior but program still works
+#   "ERROR"    → serious issues that will prevent the program from running correctly
+#   "CRITICAL" → something has gone horribly wrong, program cannot continue to run
+log_level = "DEBUG"
+
 # Paths to CSV directories and output files
 screenworks_csv_dir = "ScreenWorks"
+
 toyopuc_csv_dir = "Toyopuc"
+
 sw_output_path = "bins\\sw_comments.bin"
+
 toyo_output_path = "bins\\toyo_comments.bin"
+
+
+
 # Column numbers for CSV files
 # Note: sw = screenworks, toyo = Toyopuc
 sw_addr_col = 11
+
 sw_comment_col = 7 
+
 toyo_addr_col = 1
+
 toyo_comment_col = 2 

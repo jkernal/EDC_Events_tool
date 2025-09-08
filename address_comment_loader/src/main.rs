@@ -14,8 +14,8 @@
 use std::env;
 use std::time::Instant;
 use std::{fs::{self, File}, io::{BufReader, Write}, path::{Path, PathBuf}};
-use csv::{ReaderBuilder};
-use encoding_rs::UTF_16LE;
+use csv::ReaderBuilder;
+use encoding_rs::{UTF_16LE, Encoding};
 use encoding_rs_io::DecodeReaderBytesBuilder;
 #[allow(unused_imports)]
 use log::{info, warn, error, debug, trace};
@@ -25,7 +25,7 @@ mod config;
 
 
 
-fn get_first_file(dir_path: &str) -> Option<PathBuf> {
+fn get_first_csv_file(dir_path: &str) -> Option<PathBuf> {
     /*
     Get the path to the first file in the directory.
 
@@ -51,7 +51,7 @@ fn get_first_file(dir_path: &str) -> Option<PathBuf> {
     //loop through the array of entries and return the first file. (there could be directories in the entries array)
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_file() && is_csv_file(&path){
+        if path.is_file() && is_csv_file(&path) {
             return Some(path);
         }
         
@@ -82,8 +82,10 @@ fn pad_or_truncate(input: &str, size: usize) -> Vec<u8> {
     //check if bytes meet size requirements
     if bytes.len() > size {
         bytes.truncate(size);
+        debug!("Transformed '{}' into '{}'", input, String::from_utf8_lossy(&bytes))
     } else if bytes.len() < size {
         bytes.resize(size, b' ');
+        debug!("Transformed '{}' into '{}'", input, String::from_utf8_lossy(&bytes))
     }
     
     bytes
@@ -91,9 +93,9 @@ fn pad_or_truncate(input: &str, size: usize) -> Vec<u8> {
 
 
 
-fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: usize) -> Vec<Vec<u8>> {
+fn get_comments(csv_path: &str, addr_index: usize, comment_index: usize, encoding: Option<&'static Encoding>, source: &str) -> Vec<Vec<u8>> {
     /*
-    Get all if the address and comments in the screenworks export csv and put them in an array.
+    Get all if the address and comments in the csv file and put them in an array.
 
     Arguments:
         csv_path (&str): the path to the screenworks csv.
@@ -115,14 +117,14 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
         Err(error) => panic!("There was a problem opening the csv file.\n{error}"),
     };
 
-    //The ScreenWorks software exports csv in UTF-16 LE so a conversion is needed:
-    //Covert UTF-16 LE to UTF-8
-    let converted_csv = DecodeReaderBytesBuilder::new()
-        .encoding(Some(UTF_16LE))
-        .build(csv_file);
-
     //Construct a reader object
-    let reader = BufReader::new(converted_csv);
+    let reader: Box<dyn std::io::Read> = match encoding {
+        Some(enc) => {
+            let converted = DecodeReaderBytesBuilder::new().encoding(Some(enc)).build(csv_file);
+            Box::new(BufReader::new(converted))
+        }
+        None => Box::new(BufReader::new(csv_file)),
+    };
 
     //Construct the CSV reader object
     let mut csv_reader = ReaderBuilder::new().flexible(true).from_reader(reader);
@@ -172,7 +174,7 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
         //remove spaces from start and end
         comment = replaced_comment.trim().to_string();
 
-        debug!("{address} = {comment}");
+        debug!("From {source}: {address} = {comment}");
 
         //put the address string in a 96 byte field, left justified
         addr_field = format!("{address:<64}");
@@ -182,8 +184,6 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
         //confirm or correct field size then combine the two field to complete an address and comment pair
         let mut record_bytes = pad_or_truncate(&addr_field, 64);
         record_bytes.extend(pad_or_truncate(&comment_field, 96));
-
-        debug!("Record len: {}", record_bytes.len());
 
         //add the complete record to the records array
         records.push(record_bytes);
@@ -202,112 +202,6 @@ fn get_screenwroks_comments(csv_path: &str, addr_index: usize, comment_index: us
     records
 }
 
-fn get_toyopuc_comments(csv_path: &str, addr_index: usize, comment_index: usize) -> Vec<Vec<u8>> {
-    /*
-    Get all if the address and comments in the toyopuc comment csv and put them in an array.
-
-    Arguments:
-        csv_path (&str): the path to the toyopuc csv.
-        addr_index (usize): the position of the address in the csv starting at 0.
-        comment_index (usize): the position of the comment in the csv starting at 0.
-
-    Returns:
-        Vec<Vec<u8>>: the complete 2 dimensional array of addresses and comments. The address field is 64 bytes long and the comment field is 96 bytes long.
-            example:
-                [[GMF900, L/C FAULT (OPERATOR SIDE)], [GMF8F0, PART SET FAULT]]
-     */
-    
-    //Open the file
-    let file_result = File::open(csv_path);
-
-    //Handle opening errors
-    let csv_file = match file_result {
-        Ok(file) => file,
-        Err(error) => panic!("There was a problem opening the csv file.\n{error}"),
-    };
-
-    //Construct a reader object
-    let reader = BufReader::new(csv_file);
-
-    //Construct the CSV reader object
-    let mut csv_reader = ReaderBuilder::new().flexible(true).from_reader(reader);
-
-    //Create iterator for csv file
-    let iter = csv_reader.records();
-
-    //loop and write all address and comment pairs to the array
-    let mut records = Vec::new();
-    let mut address;
-    let mut comment;
-    let mut addr_field;
-    let mut comment_field;
-    let mut record_count = 0;
-    for line in iter {
-        //Handle string errors
-        let record = match line {
-            Ok(rec) => rec,
-            Err(error) => {
-                debug!("Error reading this line: {error}");
-                continue; //Skip errored line
-            }
-        };
-        
-        //Check to make sure the indices are accessible
-        if record.len() <= comment_index || record.len() <= addr_index {
-            debug!("Skipping malformed or short record: {record:?}");
-            continue;
-        }
-
-        //Since _record is a Options enum, have to check for error condition
-        //If the line errors out, I assume that there is no usable address, so I skip it
-        if let Some(field) = record.get(addr_index) {
-            //remove spaces from start and end of the string
-            address = field.trim();
-        } else {
-            continue;
-        }
-
-        //splits the string by \
-        address = address.split("\\").next().unwrap_or("XXXXX"); // the split method returns an iterator so the next() method selects the first element
-
-        //fallback upon error to empty string
-        let raw_comment = record.get(comment_index).unwrap_or("Not found");
-        //replace \n characters with a space
-        let replaced_comment = raw_comment.replace("\\n", " ");
-        //remove spaces from start and end
-        comment = replaced_comment.trim().to_string();
-
-        debug!("{address} = {comment}");
-
-        //put the address string in a 96 byte field, left justified
-        addr_field = format!("{address:<64}");
-        //put the comment string in a 96 byte field, left justified
-        comment_field = format!("{comment:<96}");
-
-        //confirm or correct field size then combine the two field to complete an address and comment pair
-        let mut record_bytes = pad_or_truncate(&addr_field, 64);
-        record_bytes.extend(pad_or_truncate(&comment_field, 96));
-
-        debug!("Record len: {}", record_bytes.len());
-
-        //add the complete record to the records array
-        records.push(record_bytes);
-        record_count += 1;
-    }
-
-    //log how many records were found
-    if record_count > 1 {
-        info!("Found {record_count} comments in the Toyopuc csv file.");
-    } else if record_count == 1 {
-        info!("Found {record_count} comment in the Toyopuc csv file.");
-    } else {
-        info!("No comments found in the Toyopuc csv file.");
-    }
-
-    records
-
-}
-
 
 
 fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
@@ -322,7 +216,7 @@ fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
         bool: Weather or not the write was successful.
     */
 
-    //create .bin file
+    // create .bin file
     let output_file_result = File::create(bin_path);
 
     //handle file creation errors
@@ -334,7 +228,7 @@ fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
         }
     };
 
-    //write all elements in the array
+    // write all elements in the array
     for chunk in contents {
 
         match output_file.write_all(&chunk) {
@@ -346,8 +240,10 @@ fn write_comments_table_file(contents: Vec<Vec<u8>>, bin_path: &str) -> bool {
         }
     }
 
-    true //indicate that the write was successful
+    true // indicate that the write was successful
 }
+
+
 
 fn is_csv_file(path: &Path) -> bool {
     match path.extension() {
@@ -355,6 +251,8 @@ fn is_csv_file(path: &Path) -> bool {
         None => false,
     }
 }
+
+
 
 fn main() {
     /*
@@ -436,7 +334,7 @@ fn main() {
         match fs::remove_file(&sw_out_path) {
             Ok(_) => {}
             Err(error) => {
-                info!("Failed to delete {sw_path_str} | {error}");
+                error!("Failed to delete {sw_path_str} | {error}");
             }
         }
     }
@@ -452,7 +350,7 @@ fn main() {
         match fs::remove_file(&toyo_out_path) {
             Ok(_) => {}
             Err(error) => {
-                info!("Failed to delete {toyo_path_str} | {error}");
+                error!("Failed to delete {toyo_path_str} | {error}");
             }
         }
     }
@@ -464,7 +362,7 @@ fn main() {
     debug!("ScreenWorks directory: {sw_csv_str}");
 
     //get the pathbuf of the screenworks csv file
-    let screenworks_csv_pathbuf = match get_first_file(&sw_csv_str) {
+    let screenworks_csv_pathbuf = match get_first_csv_file(&sw_csv_str) {
         Some(path) => {
             screenworks_csv_exists = true;
             path
@@ -487,7 +385,7 @@ fn main() {
     debug!("Toyopuc directory: {toyo_csv_str}");
 
     //get the pathbuf to the toyopuc csv
-    let toyopuc_csv_pathbuf = match get_first_file(&toyo_csv_str) {
+    let toyopuc_csv_pathbuf = match get_first_csv_file(&toyo_csv_str) {
         Some(path) => {
             toyopuc_csv_exists = true;
             path
@@ -503,32 +401,36 @@ fn main() {
     let toyopuc_csv_path = toyopuc_csv_pathbuf.to_str().unwrap_or("Not found");
     debug!("Path to Toyopuc csv: {toyopuc_csv_path}");
 
-    let mut sw_file_write_complete = false;
-
-    //if screenworks csv does exists, get the comments and write them to the screenworks output file
-    if screenworks_csv_exists {
-        let sw_comments_table = get_screenwroks_comments(
-            screenworks_csv_path,
-            user_config.sw_addr_col - 1,
-            user_config.sw_comment_col - 1,
-        );
-
-        sw_file_write_complete =
-            write_comments_table_file(sw_comments_table, &sw_out_path.to_string_lossy());
-    }
-
     let mut toyo_file_write_complete = false;
 
     //if toyopuc csv exists, get the comments and write them to the toyopuc output file
     if toyopuc_csv_exists {
-        let toyo_comments_table = get_toyopuc_comments(
+        let toyo_comments_table = get_comments(
             toyopuc_csv_path,
             user_config.toyo_addr_col - 1,
             user_config.toyo_comment_col - 1,
+            None,
+            "Toyopuc"
         );
         
         toyo_file_write_complete =
             write_comments_table_file(toyo_comments_table, &toyo_out_path.to_string_lossy())
+    }
+
+    let mut sw_file_write_complete = false;
+
+    //if screenworks csv does exists, get the comments and write them to the screenworks output file
+    if screenworks_csv_exists {
+        let sw_comments_table = get_comments(
+            screenworks_csv_path,
+            user_config.sw_addr_col - 1,
+            user_config.sw_comment_col - 1,
+            Some(UTF_16LE),
+            "ScreenWorks"
+        );
+
+        sw_file_write_complete =
+            write_comments_table_file(sw_comments_table, &sw_out_path.to_string_lossy());
     }
 
     //log what was completed

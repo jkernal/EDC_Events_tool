@@ -3,7 +3,7 @@
 # PURPOSE: To extract the comments given in a Toyopuc project
 #   and write them to the corresponding address in the template for easy event importing.
 # NOTES: See the github repository for more info.
-#   https:\\github.com/jkernal/EDC_Events_tool
+#   https://github.com/jkernal/EDC_Events_tool
 # VERSION: v2.0.0
 # START DATE: 17 Oct 22
 
@@ -11,29 +11,31 @@ from time import perf_counter
 t1 = perf_counter()
 
 from mmap import ACCESS_READ, mmap
-from os import R_OK, W_OK, X_OK, access, getcwd, listdir, system
+from os import R_OK, W_OK, X_OK, access, system
 from pathlib import Path
-from re import fullmatch, search
+from importlib import import_module
+from re import fullmatch, search, compile, IGNORECASE
 from shutil import copy
 from subprocess import check_call, check_output, run
 from sys import executable
 from sys import version as sys_version
 from datetime import datetime
-from packaging import version
+
 
 #import utils
 from utils.load_config import load_config
 from utils.logger_setup import setup_logging
 
-WRK_DIR = getcwd()
+WRK_DIR = Path.cwd()
 
-CFG = load_config(f"{WRK_DIR}\\utils\\import_config.toml")
+CFG = load_config(WRK_DIR / "utils" / "import_config.toml")
 
-LOG = setup_logging(__name__,
-                    CFG["general"]["log_level"],
-                    log_dest=CFG["general"]["log_output"],
-                    filename=f"{WRK_DIR}\\log_files\\ImportEvents_{datetime.now():%Y%m%d_%H%M%S}.log"
-                    )
+LOG = setup_logging(
+    __name__,
+    CFG["general"]["log_level"],
+    log_dest=CFG["general"]["log_output"],
+    filename=WRK_DIR / "log_files" / f"ImportEvents_{datetime.now():%Y%m%d_%H%M%S}.log"
+)
 
 LOG.debug(f"Current Working Directory: {WRK_DIR}")
 
@@ -63,6 +65,15 @@ update_check_enabled = True
 
 v = "2.1.0"
 
+pattern_flags = IGNORECASE if CFG["general"]["case_insensitive"] else 0
+REGEX_PATTERNS = [
+    compile(p, pattern_flags)
+    for p in CFG.get("noise", {}).get("patterns", [])
+]
+LOG.debug(f"{REGEX_PATTERNS}")
+
+REGEX_BYPASS = CFG["general"]["regex_bypass"]
+
 def install_lib(lib):
     """
     Installs the specified Python library using pip.
@@ -82,25 +93,21 @@ def install_lib(lib):
     print(installed_packages)
 
 
-# check if libraries are installed, if not, install it
-try:
-    from openpyxl import load_workbook
-except ModuleNotFoundError:
-    print(f"{ansi['Bright Red']}Openpyxl library is not installed.")
-    install_lib("Openpyxl")
-    from openpyxl import load_workbook
-try:
-    from requests import get
-except ModuleNotFoundError:
-    print(f"{ansi['Bright Red']}Requests library is not installed.")
-    install_lib("requests")
-    from requests import get
-try:
-    from tqdm import tqdm
-except ModuleNotFoundError:
-    print(f"{ansi['Bright Red']}tqdm library is not installed.")
-    install_lib("tqdm")
-    from tqdm import tqdm
+def ensure_lib(lib: str, attr: str | None = None):
+    """Import a library, installing it if necessary."""
+    try:
+        module = import_module(lib)
+    except ModuleNotFoundError:
+        print(f"{ansi['Bright Red']}{lib} library is not installed.")
+        install_lib(lib)
+        module = import_module(lib)
+    return getattr(module, attr) if attr else module
+
+
+load_workbook = ensure_lib("openpyxl", "load_workbook")
+get = ensure_lib("requests", "get")
+tqdm = ensure_lib("tqdm", "tqdm")
+version = ensure_lib("packaging.version")
 
 
 def preamble():
@@ -113,7 +120,7 @@ def preamble():
     print(
         f"{ansi['Underline']}{ansi['Bright Magenta']}Events Layout Import Tool{ansi['Reset']}"
     )
-    print(v)
+    print(f"v{v}")
 
     LOG.debug("Python Version: " + sys_version[:7])
 
@@ -141,7 +148,7 @@ def preamble():
             )
 
 
-def manages_files():
+def manages_files() -> list:
     """
     Confirms the presence of template, input, and output directories and files.
     Copies the template file into the output directory for modification.
@@ -150,11 +157,11 @@ def manages_files():
         list: File paths for the template, output copy, and input file.
     """
 
-    temp_dir = f"{WRK_DIR}\\template"
+    temp_dir = WRK_DIR.parent / "template"
     # confirming files
     try:
         LOG.debug(f"Template directory: {temp_dir}")
-        temp_loc = f"{temp_dir}\\{listdir(temp_dir)[0]}"
+        temp_loc = next(temp_dir.iterdir())
         LOG.debug(f"Template location: {temp_loc}")
     except FileNotFoundError:
         LOG.error(f"Template directory not found. {temp_dir}")
@@ -162,7 +169,7 @@ def manages_files():
             f"{ansi['Bold']}{ansi['Bright Red']}The template directory was not found.\n\nPlease add the template directory and restart."
         )
         done()
-    except IndexError:
+    except StopIteration:
         LOG.error(f"Template file not found. {temp_dir}")
         print(
             f"{ansi['Bold']}{ansi['Bright Red']}The template file was not found.\n\nPlease add the template file to the template directory and restart."
@@ -170,7 +177,7 @@ def manages_files():
         done()
     # Copying template file to output directory
     try:
-        output_path = f"{WRK_DIR}\\out_{listdir(temp_dir)[0]}"
+        output_path = WRK_DIR.parent / f"out_{temp_loc.name}"
         LOG.debug(f"Output file path: {output_path}")
         copy(temp_loc, output_path)
         LOG.info("Copied template file successfully.")
@@ -186,23 +193,20 @@ def manages_files():
         )
         done()
 
-    toyo_loc = f"{WRK_DIR}\\loader\\bins\\toyo_comments.bin"
+    toyo_loc = WRK_DIR.parent / "loader" / "bins" / "toyo_comments.bin"
+    LOG.debug(f"Toyopuc file location: {toyo_loc}")
 
-    toyo_path = Path(toyo_loc)
-    LOG.debug(f"Toyopuc file location: {toyo_path}")
-
-    if not toyo_path.exists():
+    if not toyo_loc.exists():
         toyo_loc = None
         LOG.warning("Toyopuc binary file not found.")
     else:
         LOG.info("Toyopuc binary file found.")
 
-    sw_loc = f"{WRK_DIR}\\loader\\bins\\sw_comments.bin"
+    sw_loc = WRK_DIR.parent / "loader" / "bins" / "sw_comments.bin"
 
-    sw_path = Path(sw_loc)
-    LOG.debug(f"ScreenWorks file location: {sw_path}")
+    LOG.debug(f"ScreenWorks file location: {sw_loc}")
     
-    if not sw_path.exists():
+    if not sw_loc.exists():
         sw_loc = None
         LOG.warning("ScreenWorks binary file not found.")
     else:
@@ -222,25 +226,21 @@ def perm_check(locs):
 
     file_names = ["template", "output", "Toyopuc comment", "ScreenWorks"]
     access_type = ["read", "write", "execute"]
-    for i in range(len(locs)):
-        if locs[i] is None:
+    for loc, name in zip(locs, file_names):
+        if loc is None:
             continue
-        permissions = [
-            access(locs[i], R_OK),
-            access(locs[i], W_OK),
-            access(locs[i], X_OK),
-        ]
-        for j in range(len(permissions)):
-            if not permissions[j]:
+        permissions = [access(loc, R_OK), access(loc, W_OK), access(loc, X_OK)]
+        for perm, acc in zip(permissions, access_type):
+            if not perm:
                 print(
-                    f"{ansi['Bold']}{ansi['Bright Red']}The script does not have {access_type[j]} access to the {file_names[i]} file. Make sure the file is closed and permissions are set."
+                    f"{ansi['Bold']}{ansi['Bright Red']}The script does not have {acc} access to the {name} file. Make sure the file is closed and permissions are set."
                 )
             else:
                 continue
     return None
 
 
-def get_address_array_from_template(sheet):
+def get_address_array_from_template(sheet) -> list:
     """
     Extracts address values from column B of the Excel worksheet starting from row 3.
 
@@ -251,18 +251,19 @@ def get_address_array_from_template(sheet):
         list: A list of [address, row number] pairs.
     """
 
-    array = []
-    for i in range(sheet.max_row):
-        array.append([sheet.cell(i + 3, 2).value, i + 3])
-    return array
+    addresses = []
+    # Start at row 3 to skip header rows in column B
+    for row in range(3, sheet.max_row + 1):
+        cell = sheet.cell(row=row, column=2)  # column B
+        addresses.append([cell.value, row])
+    return addresses
 
 
-def load_shm_as_dict(path, record_size=160):
+def load_shm_as_dict(path, record_size=160) -> dict:
 
     address_map = {}
 
-    with open(path, "rb") as f:
-        mm = mmap(f.fileno(), 0, access=ACCESS_READ)
+    with open(path, "rb") as f, mmap(f.fileno(), 0, access=ACCESS_READ) as mm:
 
         for i in range(0, len(mm), record_size):
             record = mm[i : i + record_size]
@@ -271,7 +272,6 @@ def load_shm_as_dict(path, record_size=160):
             LOG.debug(f"From {path}: {addr} = {comment}")
             if addr:
                 address_map[addr] = comment
-        mm.close()
     return address_map
 
 
@@ -299,19 +299,19 @@ def remove_first_zero_if_long(s):
 
 def is_valid_by_regex(s: str) -> bool:
 
-    patterns = [r"FAULT\s?\d[A-Z]\d", r".*FAULT SPARE \d{1,2}$", r"(?:\b(?:TOTAL|OTHER)\s+)?FAULT(?:\s+\w+)?(?:\s+FAULT)?\s+\w+"]
-
     if not isinstance(s, str):
         LOG.debug(f"'{s}' is not a string. Rejected by regex.")
         return False  # or True if you want to skip None-like inputs
     
-    for pattern in patterns:
-        if fullmatch(pattern, s) and CFG["general"]["regex_match"] == "fullmatch":
-            LOG.debug(f"'{s}' was rejected by regex pattern: {pattern}")
-            return False  # it matched a disallowed pattern
-        elif search(pattern, s) and CFG["general"]["regex_match"] == "search":
-            LOG.debug(f"'{s}' was rejected by regex pattern: {pattern}")
-            return False
+    for pattern in REGEX_PATTERNS:
+        if CFG["general"]["regex_match"] == "fullmatch":
+            if pattern.fullmatch(s):
+                LOG.debug(f"'{s}' was rejected by regex pattern: {pattern.pattern}")
+                return False  # it matched a disallowed pattern
+        else:
+            if pattern.search(s):
+                LOG.debug(f"'{s}' was rejected by regex pattern: {pattern.pattern}")
+                return False
 
     LOG.debug(f"'{s}' was valid by regex.")
     return True  # didn't match any patterns
@@ -319,23 +319,27 @@ def is_valid_by_regex(s: str) -> bool:
 
 def main():
     """
-    Main execution flow:
-    - Initializes script
-    - Confirms and copies files
-    - Checks file permissions
-    - Extracts addresses from Excel and comments from CSV
-    - Matches and writes comments to the Excel output
-    - Saves file and reports results
+    * Main execution flow:
+    * - Initializes script
+    * - Confirms and copies files
+    * - Checks file permissions
+    * - Extracts addresses from Excel and comments from CSV
+    * - Matches and writes comments to the Excel output
+    * - Saves file and reports results
     """
 
     # run preamble
     preamble()
 
     # run the address comment loader program
-    loader_exe_path = Path(__file__).parent / "loader\\address_comment_loader.exe"
+    loader_exe_path = WRK_DIR.parent / "loader" / "address_comment_loader.exe"
     LOG.debug(f"Loader exe location: {loader_exe_path}")
     #print(loader_exe_path)
-    run(str(loader_exe_path))
+    exe_complete = run(str(loader_exe_path), check=True)
+    LOG.debug(f"{exe_complete}")
+    
+    if exe_complete.returncode < 0:
+        print(f"{ansi["Bright Red"]}The loader exited with an error.{ansi['Reset']}")
 
     # find file locations
     file_locs = (
@@ -369,22 +373,19 @@ def main():
     else:
         sw_exists = False
 
-    toyo_match_count, sw_match_count, address_array_len = 0, 0, len(lookup_addresses)
+    toyo_match_count, sw_match_count = 0, 0
 
     print(f"\n{ansi['Reset']}{ansi['Green']}Working on it...", flush=True, end="")
 
     # loop through the addresses and compare to the array with comments
-    for i in tqdm(range(address_array_len)):
+    for address, row in tqdm(lookup_addresses):
         
-        if lookup_addresses[i][0] is None:
+        if address is None:
             continue
-        elif len(lookup_addresses[i][0]) == 4:
-            searched_address = "P1-" + lookup_addresses[i][0]
+        elif len(address) == 4:
+            searched_address = "P1-" + address
         else:
-            searched_address = lookup_addresses[i][0]
-
-        #print(f"From ScreenWorks: {searched_address} = {sw_addr_comment_map.get(searched_address)}")
-        #print(f"From Toyopuc:  {searched_address} = {toyo_addr_comment_map.get(searched_address)}")
+            searched_address = address
         
         if toyo_exists:
             toyo_result = toyo_addr_comment_map.get(searched_address)
@@ -401,42 +402,31 @@ def main():
 
         if isinstance(toyo_result, str) and is_valid_by_regex(toyo_result):
             if toyo_result is not None:
-                ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[
-                    i
-                ][0]
-                ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                    toyo_addr_comment_map.get(searched_address)
-                )
+                ws.cell(row=row, column=6).value = address
+                ws.cell(row=row, column=7).value = toyo_result
                 LOG.debug(f"{searched_address} comment is from Toyopuc.")
                 toyo_match_count += 1
                 continue
         
         elif isinstance(sw_result, str) and is_valid_by_regex(sw_result):
             if sw_result is not None:
-                ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[
-                    i
-                ][0]
-                ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                    sw_addr_comment_map.get(searched_address)
-                )
+                ws.cell(row=row, column=6).value = address
+                ws.cell(row=row, column=7).value = sw_result
                 LOG.debug(f"{searched_address} comment is from ScreenWorks.")
                 sw_match_count += 1
                 continue
         
-        if toyo_result is not None:
-            ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
-            ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                toyo_addr_comment_map.get(searched_address)
-            )
-            LOG.debug(f"{searched_address} comment is from Toyopuc.")
-            toyo_match_count += 1
-        elif sw_result is not None:
-            ws.cell(row=lookup_addresses[i][1], column=6).value = lookup_addresses[i][0]
-            ws.cell(row=lookup_addresses[i][1], column=7).value = (
-                sw_addr_comment_map.get(searched_address)
-            )
-            LOG.debug(f"{searched_address} comment is from ScreenWorks.")
-            sw_match_count += 1
+        if REGEX_BYPASS:
+            if toyo_result is not None:
+                ws.cell(row=row, column=6).value = address
+                ws.cell(row=row, column=7).value = toyo_result
+                LOG.debug(f"{searched_address} comment is from Toyopuc.")
+                toyo_match_count += 1
+            elif sw_result is not None:
+                ws.cell(row=row, column=6).value = address
+                ws.cell(row=row, column=7).value = sw_result
+                LOG.debug(f"{searched_address} comment is from ScreenWorks.")
+                sw_match_count += 1
 
     # save changes to the output file
     wb.save(file_locs[1])

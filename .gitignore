@@ -1,13 +1,14 @@
 out_BW Specific Fault Layout Toyopuc V9.1.xlsx
 address_comment_loader/target/*
-output/*
-!output/.gitkeep
+address_comment_loader/log_files/*
+!address_comment_loader/log_files/.gitkeep
 ScreenWorks/*
 !ScreenWorks/.gitkeep
 Toyopuc/*
 !Toyopuc/.gitkeep
-loader/bin/*
-!loader/bin/.gitkeep
-loader/log_files/*
-!log_files/.gitkeep
-log_files/*
+loader/bins/*
+!loader/bins/.gitkeep
+src/log_files/*
+!src/log_files/.gitkeep
+src/utils/__pycache__/*
+src/tests/__pycache__/*

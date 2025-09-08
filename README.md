@@ -47,7 +47,10 @@ Make sure Unicode is selected. Then click Ok.
 - If you have any issues with dependencies or library imports let me know.
 - When running for the first time it will need to install libraries so don't panic.
 ## To-Do
-- Sit back and relax
+- Spell check?
+- Common abbreviations
+- Omron support
+- AB support?
 
   
  
